@@ -1,6 +1,6 @@
 {
-  "name": "Community Hero",
-  "description": "Civic issue reporting application powered by Gemini AI and Firebase storage, helping citizens report potholes, water leakages, streetlight faults, garbage, and other community issues instantly.",
+  "name": "Civora",
+  "description": "Civora is a civic issue reporting application powered by Gemini AI and Firebase storage, helping citizens report potholes, water leakages, streetlight faults, garbage, and other community issues instantly.",
   "requestFramePermissions": [
     "camera",
     "microphone",

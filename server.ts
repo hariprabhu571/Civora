@@ -293,7 +293,13 @@ app.post('/api/generate-trend', async (req, res) => {
   try {
     const { reports } = req.body;
 
+    console.log('\n========================================');
+    console.log('[Civora API] /api/generate-trend called!');
+    console.log(`[Civora API] Received ${reports?.length || 0} reports for aggregation.`);
+
     if (!reports || !Array.isArray(reports) || reports.length === 0) {
+      console.log('[Civora API] No active reports found in last 7 days payload. Returning empty/clean streets summary.');
+      console.log('========================================\n');
       res.json({ 
         summary: 'No reports have been filed in the last 7 days. Our streets are looking clean and well-maintained! Keep up the great civic spirit.' 
       });
@@ -302,24 +308,93 @@ app.post('/api/generate-trend', async (req, res) => {
 
     const ai = getGeminiClient();
 
+    // Map reports safely to bypass any nested coordinate .toFixed failures
+    const formattedReportsList = reports.map((r: any, idx: number) => {
+      const category = r.category || 'Unknown/General';
+      const severity = r.severity || 'Medium';
+      
+      let latStr = 'N/A';
+      let lngStr = 'N/A';
+      
+      if (r.location) {
+        const parsedLat = Number(r.location.lat);
+        const parsedLng = Number(r.location.lng);
+        if (!isNaN(parsedLat)) latStr = parsedLat.toFixed(4);
+        if (!isNaN(parsedLng)) lngStr = parsedLng.toFixed(4);
+      }
+      
+      return `- [Report #${idx + 1}] Category: "${category}" at coordinates (${latStr}, ${lngStr}) with "${severity}" severity.`;
+    }).join('\n');
+
+    console.log('[Civora API] Formatted items for Gemini prompt:\n', formattedReportsList);
+
     const prompt = `
       You are the "Civora Civic Officer". Write a short, highly professional, encouraging, and informative plain-English paragraph summary (maximum of 3 or 4 engaging sentences) analyzing the community issue reports logged in the last 7 days.
       
       Here is the raw list of reports logged:
-      ${reports.map((r: any) => `- Under Category: "${r.category}" at approximate coordinates (${r.location.lat.toFixed(4)}, ${r.location.lng.toFixed(4)}) with "${r.severity}" severity.`).join('\n')}
+      ${formattedReportsList}
 
       Briefly summarize the trends, identifying which categories are most active, and point out any apparent problem hotspots (group by general location bins/areas). Do NOT output markdown charts, lists, or tables. Output ONLY the single paragraph text itself. Ready-to-read, warm, civic-oriented.
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    console.log('[Civora API] Prompting Gemini 2.5 Flash for Weekly Summary generation...');
+    
+    let response: any;
+    let attempts = 3; // 1 initial + 2 retries
+    let lastError: any = null;
 
-    res.json({ summary: response.text?.trim() || 'Trend analysis compiled successfully.' });
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        if (attempt > 1) {
+          console.log(`[Civora API] Retrying trend generation... Attempt ${attempt}/${attempts}`);
+        }
+        
+        response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+        });
+        
+        break; // break loop on success!
+      } catch (error: any) {
+        lastError = error;
+        const errorMessage = String(error?.message || '');
+        const errorStack = String(error?.stack || '');
+        const errorStatus = error?.status || error?.statusCode || 0;
+
+        const isTransient = 
+          errorStatus === 503 ||
+          errorMessage.includes('503') || 
+          errorMessage.toUpperCase().includes('UNAVAILABLE') || 
+          errorMessage.toLowerCase().includes('overloaded') ||
+          errorMessage.toLowerCase().includes('rate limit') ||
+          errorMessage.toLowerCase().includes('quota') ||
+          errorMessage.toLowerCase().includes('resource_exhausted') ||
+          errorStack.includes('503') ||
+          errorStack.toUpperCase().includes('UNAVAILABLE');
+
+        if (isTransient && attempt < attempts) {
+          const delayMs = attempt * 1000;
+          console.warn(`[Civora API] Gemini transient error in trends (Code: ${errorStatus}, msg: "${errorMessage}"). Retrying in ${delayMs}ms...`);
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        } else {
+          console.error(`[Civora API] Gemini trends generation failed permanently on attempt ${attempt}/${attempts}. Error:`, error);
+          throw error;
+        }
+      }
+    }
+
+    if (!response) {
+      throw lastError || new Error('Gemini API returned no content for trends summary.');
+    }
+
+    const summaryText = response.text?.trim() || 'Trend analysis compiled successfully.';
+    console.log('[Civora API] Gemini response received successfully:', summaryText);
+    console.log('========================================\n');
+
+    res.json({ summary: summaryText });
 
   } catch (error: any) {
-    console.error('Error generating trends:', error);
+    console.error('[Civora API] Error generating trends:', error);
     res.status(500).json({ error: 'Failed to generate weekly trends summary text', details: error.message || error });
   }
 });

@@ -493,18 +493,19 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
   };
 
   return (
-    <div className="bg-slate-50 min-h-full py-6 px-4 md:px-8 font-sans">
-      <div id="form-container" className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 flex flex-col min-h-[500px]">
+    <div className="bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] min-h-full py-8 px-4 md:px-8 font-sans">
+      <div id="form-container" className="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200/50 flex flex-col min-h-[500px]">
         {/* Dynamic header progress bars */}
-        <div id="form-header" className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-indigo-800 py-5 px-6 text-white flex items-center justify-between">
-          <div>
-            <span className="text-xs uppercase tracking-wider text-indigo-200 font-bold">COMMUNITY HERO AUDIT</span>
-            <h2 className="text-xl md:text-2xl font-display font-semibold tracking-tight">Report Civic Issue</h2>
+        <div id="form-header" className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 py-6 px-6 md:px-8 text-white flex items-center justify-between border-b border-indigo-950/40 relative">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
+          <div className="relative">
+            <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-extrabold bg-indigo-950/80 border border-indigo-900/40 px-3 py-1 rounded-full">Civora Citizen Dispatch</span>
+            <h2 className="text-xl md:text-2xl font-display font-black tracking-tight mt-2.5">Report Civic Issue</h2>
           </div>
           <button 
             id="close-report-btn"
             onClick={onBackToMap}
-            className="text-[13px] font-semibold bg-white/10 hover:bg-white/20 px-3.5 py-1.5 rounded-lg transition"
+            className="text-xs font-bold uppercase tracking-wider bg-white/5 hover:bg-white/10 px-4 py-2 border border-white/10 rounded-xl transition duration-150"
           >
             Cancel
           </button>

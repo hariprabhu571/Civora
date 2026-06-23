@@ -72,17 +72,21 @@ export default function WeeklyTrends() {
   }, []);
 
   return (
-    <div id="weekly-trends-box" className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-6">
+    <div id="weekly-trends-box" className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/60 shadow-xl shadow-slate-100/40 p-6 md:p-8 space-y-8 relative overflow-hidden">
       
+      {/* Absolute design grids */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
+
       {/* Title */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
-            <Sparkles size={18} className="animate-pulse" />
+      <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 bg-gradient-to-tr from-indigo-500 to-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/10">
+            <Sparkles size={20} className="animate-pulse" />
           </div>
           <div>
-            <h2 className="font-display font-semibold text-lg text-slate-800 leading-tight">Weekly Civic Impact</h2>
-            <p className="text-slate-400 text-xs">AI-driven narrative summarizing regional developments</p>
+            <h2 className="font-display font-extrabold text-xl text-slate-900 leading-tight">Weekly Civic Impact</h2>
+            <p className="text-slate-400 text-xs mt-0.5 font-medium">Real-time narrative summarizing municipal trends & developments</p>
           </div>
         </div>
 
@@ -90,7 +94,7 @@ export default function WeeklyTrends() {
           id="trends-refresh-btn"
           onClick={fetchTrendsData}
           disabled={loading}
-          className="p-2 hover:bg-slate-50 text-slate-500 rounded-lg transition border border-slate-100 disabled:opacity-50"
+          className="p-2.5 hover:bg-slate-50 text-slate-500 hover:text-slate-900 rounded-xl transition border border-slate-200/50 disabled:opacity-50 active:scale-95 shadow-sm bg-white"
           title="Refresh statistics"
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -98,59 +102,77 @@ export default function WeeklyTrends() {
       </div>
 
       {loading ? (
-        <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
-          <Loader2 size={32} className="animate-spin text-indigo-600" />
-          <p className="text-xs text-slate-400 font-semibold">Gemini is writing the week's summary...</p>
+        <div className="py-20 flex flex-col items-center justify-center text-center space-y-4">
+          <div className="relative flex items-center justify-center w-12 h-12">
+            <span className="absolute w-full h-full border-2 border-indigo-600/20 rounded-full" />
+            <span className="absolute w-full h-full border-t-2 border-indigo-600 rounded-full animate-spin" />
+          </div>
+          <div>
+            <p className="text-sm font-extrabold text-slate-800">Synthesizing District Narrative...</p>
+            <p className="text-xs text-slate-400 max-w-xs mx-auto mt-1 leading-relaxed">Gemini AI is scanning active reports, calculating hot zones, and preparing your weekly digest.</p>
+          </div>
         </div>
       ) : (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-8 animate-fade-in">
           
           {/* Main Gemini Statement Card */}
-          <div className="bg-slate-900 text-slate-100 p-5 rounded-xl relative overflow-hidden shadow-inner border border-slate-800">
+          <div className="bg-slate-950 text-slate-100 p-6 md:p-7 rounded-2xl relative overflow-hidden shadow-2xl border border-slate-900 shadow-slate-950/20">
             {/* Ambient background glow */}
-            <div className="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -top-12 -right-12 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative">
-              <span className="text-[10px] uppercase font-extrabold tracking-wider text-indigo-400 flex items-center gap-1.5 mb-2.5">
-                <Sparkles size={11} /> Gemini Impact Narrative
+              <span className="text-[10px] uppercase font-black tracking-widest text-indigo-400 bg-indigo-950 border border-indigo-900/60 px-2.5 py-1 rounded-full flex items-center gap-1.5 mb-4 w-fit">
+                <Sparkles size={11} className="text-indigo-400 animate-spin-slow shrink-0" /> Gemini Intelligence Summary
               </span>
-              <p className="text-xs md:text-sm font-medium leading-relaxed select-text italic text-slate-200">
+              <p className="text-[13px] md:text-[15px] font-medium leading-relaxed select-text italic text-slate-150 pl-1">
                 "{trendsText}"
               </p>
             </div>
           </div>
 
-          {/* Sizable stats block on bottom */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-semibold">
+          {/* Bento Grid Metrics panel */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-xs font-semibold">
             
-            <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-100 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                <Calendar size={16} />
+            {/* Metric Card 1 */}
+            <div className="bg-white hover:bg-slate-50/40 rounded-2xl p-4.5 border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-4 group">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 text-[10px] uppercase tracking-wider font-extrabold">Logged (7 Days)</span>
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                  <Calendar size={15} />
+                </div>
               </div>
               <div>
-                <span className="block text-slate-400 text-[10px] uppercase tracking-wider font-bold">Logged (7 Days)</span>
-                <span className="block text-[15px] font-extrabold text-slate-800 mt-0.5">{reportsCount} Complaints</span>
+                <span className="block text-2xl font-black font-display text-slate-900 mt-0.5">{reportsCount}</span>
+                <span className="text-[10px] text-slate-400 font-bold block mt-1">Community Grievances filed</span>
               </div>
             </div>
 
-            <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-100 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={16} />
+            {/* Metric Card 2 */}
+            <div className="bg-white hover:bg-slate-50/40 rounded-2xl p-4.5 border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-4 group">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 text-[10px] uppercase tracking-wider font-extrabold">Resolved (7 Days)</span>
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                  <CheckCircle2 size={15} />
+                </div>
               </div>
               <div>
-                <span className="block text-slate-400 text-[10px] uppercase tracking-wider font-bold">Resolved (7 Days)</span>
-                <span className="block text-[15px] font-extrabold text-slate-800 mt-0.5">{resolvedCount} Tickets</span>
+                <span className="block text-2xl font-black font-display text-emerald-600 mt-0.5">{resolvedCount}</span>
+                <span className="text-[10px] text-slate-400 font-bold block mt-1">Issues solved by services</span>
               </div>
             </div>
 
-            <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-100 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                <BarChart2 size={16} />
+            {/* Metric Card 3 */}
+            <div className="bg-white hover:bg-slate-50/40 rounded-2xl p-4.5 border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-4 group">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 text-[10px] uppercase tracking-wider font-extrabold">Active Hotspot Category</span>
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                  <BarChart2 size={15} />
+                </div>
               </div>
               <div>
-                <span className="block text-slate-400 text-[10px] uppercase tracking-wider font-bold">Active Hotspot Category</span>
-                <span className="block text-[15px] font-extrabold text-slate-800 mt-0.5 truncate max-w-[130px]">{topCategory}</span>
+                <span className="block text-md font-black text-slate-900 mt-1.5 truncate max-w-full leading-tight">{topCategory}</span>
+                <span className="text-[10px] text-slate-400 font-bold block mt-1">Highest frequency complaint</span>
               </div>
             </div>
 
