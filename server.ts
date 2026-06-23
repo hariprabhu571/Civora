@@ -1,0 +1,382 @@
+import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import { createServer as createViteServer } from 'vite';
+import { GoogleGenAI } from '@google/genai';
+import { initializeApp as initializeFirebaseApp } from 'firebase/app';
+import { getStorage as getFirebaseStorage, ref as firebaseStorageRef, uploadString as firebaseUploadString, getDownloadURL as firebaseGetDownloadURL } from 'firebase/storage';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+// Load client config safely on server to instantiate server-side Firebase client
+let firebaseConfig: any = {};
+let serverStorage: any = null;
+try {
+  const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
+  if (fs.existsSync(configPath)) {
+    firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const firebaseServerApp = initializeFirebaseApp(firebaseConfig);
+    serverStorage = getFirebaseStorage(firebaseServerApp);
+    console.log('[Community Hero App] Server-side Firebase Storage successfully initialized.');
+  }
+} catch (err) {
+  console.error('[Community Hero App] Failed to initialize server-side Firebase fallback:', err);
+}
+
+// Initialize Express
+const app = express();
+const PORT = 3000;
+
+// Increase request payload size limit for base64 image transfers
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
+
+// Initialize Google Gen AI client safely
+const getGeminiClient = () => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY environment variable is not defined.');
+  }
+  return new GoogleGenAI({ apiKey });
+};
+
+// Robust helper to parse and clean potential model responses (e.g. stripping markdown tags if any)
+const safeJsonParse = (text: string): any => {
+  if (!text) {
+    throw new Error('Model returned an empty response.');
+  }
+  const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch (err: any) {
+    console.error('Failed to parse Gemini JSON response. Raw output:', text);
+    throw new Error(`Model returned malformed JSON structure: ${err.message}`);
+  }
+};
+
+// API: Server Health Check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// API: Analyze Civic Issue (Classification, Severity, Department, Formal Complaint Draft)
+app.post('/api/analyze-issue', async (req, res) => {
+  try {
+    const { imageBase64, mimeType, userNotesByVoiceOrText } = req.body;
+
+    if (!imageBase64) {
+      res.status(400).json({ error: 'imageBase64 parameter is required' });
+      return;
+    }
+
+    const ai = getGeminiClient();
+    
+    // Clean up the base64 string if it contains the metadata prefix
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    const cleanMimeType = mimeType || 'image/jpeg';
+
+    const prompt = `
+      You are an expert citizen service dispatcher system called "Community Hero AI". 
+      Your task is to analyze the provided image of a city civic/municipal issue (which is reported by a resident) 
+      and combine it with their raw notes or transcribed voice notes: "${userNotesByVoiceOrText || '(No additional notes provided)'}".
+
+      Please classify the report and return a SINGLE JSON object conforming STRICTLY to the following typescript schema rules:
+      - category: One of the string literals: "Pothole", "Streetlight", "Garbage/Waste", "Water Leakage", "Damaged Public Property", "Other"
+      - severity: One of the string literals: "Low", "Medium", "High"
+      - severity_reasoning: List 1-2 rapid sentences explaining why this severity was assigned.
+      - responsible_department: Select the most appropriate public department based on this category map:
+        * Pothole -> "Municipal Corporation"
+        * Damaged Public Property -> "Municipal Corporation"
+        * Streetlight -> "Electricity Board"
+        * Garbage/Waste -> "Sanitation Department"
+        * Water Leakage -> "Water Board"
+        * Other -> "Municipal Corporation" (or appropriate department in text)
+      - formal_complaint_text: A beautifully formatted, formal, articulate, and polite email-like formal complaint paragraph addressed to the responsible department. Include specific visual descriptions noticed in the image, describe the safety hazards, and formally request corrective action. Do NOT use placeholder text.
+
+      Ensure the output is valid JSON and contains only the specified fields with no extra formatting.
+    `;
+
+    // Modern SDK structured generation call
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          inlineData: {
+            data: base64Data,
+            mimeType: cleanMimeType,
+          },
+        },
+        prompt,
+      ],
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: {
+            category: {
+              type: 'STRING',
+              enum: ['Pothole', 'Streetlight', 'Garbage/Waste', 'Water Leakage', 'Damaged Public Property', 'Other'],
+            },
+            severity: {
+              type: 'STRING',
+              enum: ['Low', 'Medium', 'High'],
+            },
+            severity_reasoning: {
+              type: 'STRING',
+            },
+            responsible_department: {
+              type: 'STRING',
+              enum: ['Municipal Corporation', 'Electricity Board', 'Sanitation Department', 'Water Board', 'Other'],
+            },
+            formal_complaint_text: {
+              type: 'STRING',
+            }
+          },
+          required: ['category', 'severity', 'severity_reasoning', 'responsible_department', 'formal_complaint_text'],
+        },
+      },
+    });
+
+    const resultText = response.text;
+    if (!resultText) {
+      throw new Error('Empty response received from Gemini model');
+    }
+
+    const parsedJson = safeJsonParse(resultText);
+    res.json(parsedJson);
+
+  } catch (error: any) {
+    console.error('Error analyzing civic issue:', error);
+    res.status(500).json({ 
+      error: 'Failed to analyze civic issue', 
+      details: error.message || error 
+    });
+  }
+});
+
+// API: Duplicate Detection Analyzer
+app.post('/api/check-duplicate', async (req, res) => {
+  try {
+    const { newReportDetails, existingReports } = req.body;
+
+    console.log('\n========================================');
+    console.log('[Community Hero API] /api/check-duplicate called!');
+    console.log(`[Community Hero API] New Issue Category: "${newReportDetails?.category}"`);
+    console.log(`[Community Hero API] New Description: "${newReportDetails?.formal_complaint_text?.substring(0, 80)}..."`);
+    console.log(`[Community Hero API] New User Notes: "${newReportDetails?.userNotes || 'None'}"`);
+    console.log(`[Community Hero API] Number of candidates to evaluate within 110m radius: ${existingReports?.length || 0}`);
+
+    if (!newReportDetails || !existingReports || !Array.isArray(existingReports) || existingReports.length === 0) {
+      console.log('[Community Hero API] Skipped comparison: No active reports of same category exist nearby.');
+      console.log('========================================\n');
+      res.json({ isDuplicate: false, confidence: 0, reasoning: 'No existing reports in immediate vicinity to match.' });
+      return;
+    }
+
+    // Print details of candidates for debugging ease
+    existingReports.forEach((r: any, i: number) => {
+      console.log(`  -> Candidate #${i + 1}: ID: "${r.id}" | Status: "${r.status}" | Desc: "${r.formal_complaint_text?.substring(0, 60)}..."`);
+    });
+
+    const ai = getGeminiClient();
+
+    const prompt = `
+      You are the "Community Hero Civic Auditor" bot. Your task is to analyze details of a newly reported civic issue and compare it against the list of near-by existing active reports in the same visual area.
+      We want to prevent double-logging of the exact same real-world physical asset defect (e.g. the exact same pothole, the exact same broken street light beam, the exact same pile of garbage bags at the corner).
+
+      --- NEW REPORT INPUT DETAILS ---
+      * Category: ${newReportDetails.category}
+      * Description: ${newReportDetails.formal_complaint_text}
+      * Citizen raw notes: ${newReportDetails.userNotes || 'None'}
+      
+      --- LIST OF NEARBY REPORTS TO COMPARE ---
+      ${existingReports.map((r: any, idx: number) => `
+      - REPORT #${idx + 1} (Public ID: ${r.id})
+        * Category: ${r.category}
+        * Formal Details: ${r.formal_complaint_text}
+        * Notes: ${r.userNotes || 'None'}
+      `).join('\n')}
+
+      Determine if any of the existing active reports (REPORT #1, #2, etc.) represent the EXACT SAME physical real-world problem as the new report.
+      Provide your response in a single JSON object with the following fields:
+      - isDuplicate: boolean (true if there's a highly likely match (confidence > 75%), false otherwise)
+      - confidence: number (from 0 to 100, representing matching certainty)
+      - reasoning: string (provide a clear, direct, public-friendly explanation in 1-2 sentences explaining why they look like duplicates or why they represent different situations)
+      - matchedReportId: string (if duplicate, specify the firebase ID of the existing matched report. Use its actual ID e.g., "abc123yz", not its list numbering index. If no duplicate, write empty string)
+
+      Respond strictly in JSON.
+    `;
+
+    console.log('[Community Hero API] Prompting Gemini 2.5 Flash for duplicate screening...');
+    
+    let response: any;
+    let attempts = 3; // 1 initial attempt + 2 retries
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        if (attempt > 1) {
+          console.log(`[Community Hero API] Retrying Gemini content generation... Attempt ${attempt}/${attempts}`);
+        }
+        response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'OBJECT',
+              properties: {
+                isDuplicate: { type: 'BOOLEAN' },
+                confidence: { type: 'INTEGER' },
+                reasoning: { type: 'STRING' },
+                matchedReportId: { type: 'STRING' }
+              },
+              required: ['isDuplicate', 'confidence', 'reasoning', 'matchedReportId']
+            }
+          }
+        });
+        // Success, exit the loop!
+        break;
+      } catch (error: any) {
+        lastError = error;
+        const errorMessage = String(error?.message || '');
+        const errorStack = String(error?.stack || '');
+        const errorStatus = error?.status || error?.statusCode || 0;
+        
+        // Match 503, UNAVAILABLE, overload, capacity, rate limits or resource exhaustion
+        const isTransient = 
+          errorStatus === 503 ||
+          errorMessage.includes('503') || 
+          errorMessage.toUpperCase().includes('UNAVAILABLE') || 
+          errorMessage.toLowerCase().includes('overloaded') ||
+          errorMessage.toLowerCase().includes('rate limit') ||
+          errorMessage.toLowerCase().includes('quota') ||
+          errorMessage.toLowerCase().includes('resource_exhausted') ||
+          errorStack.includes('503') ||
+          errorStack.toUpperCase().includes('UNAVAILABLE');
+
+        if (isTransient && attempt < attempts) {
+          const delayMs = attempt * 1000; // 1s then 2s
+          console.warn(`[Community Hero API] Gemini transient error detected (Code: ${errorStatus}, msg: "${errorMessage}"). Retrying in ${delayMs}ms...`);
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        } else {
+          // Re-throw if not transient or if we ran out of attempts
+          console.error(`[Community Hero API] Gemini generation failed permanently on attempt ${attempt}/${attempts}. Error:`, error);
+          throw error;
+        }
+      }
+    }
+
+    if (!response) {
+      throw lastError || new Error('Gemini API returned no response after maximum retries.');
+    }
+
+    const responseText = response.text || '{}';
+    console.log('[Community Hero API] Gemini response received raw:\n', responseText);
+
+    const parsedJson = safeJsonParse(responseText);
+    console.log('[Community Hero API] Parsed Verdict outcome:', parsedJson);
+    console.log('========================================\n');
+
+    res.json(parsedJson);
+
+  } catch (error: any) {
+    console.error('Error during duplicate matching:', error);
+    res.status(500).json({ error: 'Failed to verify potential duplicates', details: error.message || error });
+  }
+});
+
+// API: Weekly Trends plain English paragraph generator
+app.post('/api/generate-trend', async (req, res) => {
+  try {
+    const { reports } = req.body;
+
+    if (!reports || !Array.isArray(reports) || reports.length === 0) {
+      res.json({ 
+        summary: 'No reports have been filed in the last 7 days. Our streets are looking clean and well-maintained! Keep up the great civic spirit.' 
+      });
+      return;
+    }
+
+    const ai = getGeminiClient();
+
+    const prompt = `
+      You are the "Community Hero Civic Officer". Write a short, highly professional, encouraging, and informative plain-English paragraph summary (maximum of 3 or 4 engaging sentences) analyzing the community issue reports logged in the last 7 days.
+      
+      Here is the raw list of reports logged:
+      ${reports.map((r: any) => `- Under Category: "${r.category}" at approximate coordinates (${r.location.lat.toFixed(4)}, ${r.location.lng.toFixed(4)}) with "${r.severity}" severity.`).join('\n')}
+
+      Briefly summarize the trends, identifying which categories are most active, and point out any apparent problem hotspots (group by general location bins/areas). Do NOT output markdown charts, lists, or tables. Output ONLY the single paragraph text itself. Ready-to-read, warm, civic-oriented.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    res.json({ summary: response.text?.trim() || 'Trend analysis compiled successfully.' });
+
+  } catch (error: any) {
+    console.error('Error generating trends:', error);
+    res.status(500).json({ error: 'Failed to generate weekly trends summary text', details: error.message || error });
+  }
+});
+
+// API: Secure upload image from base64 via server to bypass browser storage CORS constraints
+app.post('/api/upload-image', async (req, res) => {
+  try {
+    const { imageBase64 } = req.body;
+    if (!imageBase64) {
+      res.status(400).json({ error: 'imageBase64 parameter is required' });
+      return;
+    }
+    
+    if (!serverStorage) {
+      throw new Error('Server-side Firebase Storage has not been configured or config file was missing.');
+    }
+
+    // Generate a random ID for the storage reference to avoid collision
+    const uniqueId = Math.random().toString(36).substring(2, 10);
+    const fileName = `reports/photo_${uniqueId}.jpg`;
+    const storageRef = firebaseStorageRef(serverStorage, fileName);
+    
+    // Upload standard base64 data_url server-side
+    console.log('[Community Hero API] Proxying image upload to firebase storage target:', fileName);
+    const uploadSnapshot = await firebaseUploadString(storageRef, imageBase64, 'data_url');
+    const downloadUrl = await firebaseGetDownloadURL(uploadSnapshot.ref);
+    
+    res.json({ downloadUrl });
+  } catch (err: any) {
+    console.error('Server-side upload failed:', err);
+    res.status(500).json({ error: 'Server-side upload failed', details: err.message || err });
+  }
+});
+
+// Start the Express + Vite server
+async function bootServer() {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Starting server in DEVELOPMENT mode with Vite middleware...');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    console.log('Starting server in PRODUCTION mode, serving static built files...');
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Community Hero App] Server successfully booted. Listening on port ${PORT}`);
+  });
+}
+
+bootServer().catch((err) => {
+  console.error('Failed to boot fullstack server:', err);
+});
