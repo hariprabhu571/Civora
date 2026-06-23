@@ -493,11 +493,11 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] min-h-full py-8 px-4 md:px-8 font-sans">
-      <div id="form-container" className="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200/50 flex flex-col min-h-[500px]">
+    <div className="min-h-full py-4 px-4 md:px-8 font-sans">
+      <div id="form-container" className="max-w-4xl mx-auto bg-slate-900/40 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/10 flex flex-col min-h-[500px]">
         {/* Dynamic header progress bars */}
-        <div id="form-header" className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 py-6 px-6 md:px-8 text-white flex items-center justify-between border-b border-indigo-950/40 relative">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
+        <div id="form-header" className="bg-gradient-to-r from-[#030712] via-slate-950 to-[#030712] py-6 px-6 md:px-8 text-white flex items-center justify-between border-b border-white/5 relative">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
           <div className="relative">
             <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-extrabold bg-indigo-950/80 border border-indigo-900/40 px-3 py-1 rounded-full">Civora Citizen Dispatch</span>
             <h2 className="text-xl md:text-2xl font-display font-black tracking-tight mt-2.5">Report Civic Issue</h2>
@@ -505,7 +505,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
           <button 
             id="close-report-btn"
             onClick={onBackToMap}
-            className="text-xs font-bold uppercase tracking-wider bg-white/5 hover:bg-white/10 px-4 py-2 border border-white/10 rounded-xl transition duration-150"
+            className="text-xs font-bold uppercase tracking-wider bg-white/5 hover:bg-white/10 px-4 py-2 border border-white/10 rounded-xl transition duration-150 cursor-pointer"
           >
             Cancel
           </button>
@@ -514,15 +514,15 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
         {/* Dynamic Non-blocking alert notice banner */}
         {formNotice && (
           <div className={`px-6 py-3.5 text-xs font-semibold flex items-center justify-between transition-all ${
-            formNotice.type === 'error' ? 'bg-red-50 text-red-700 border-b border-red-100' :
-            formNotice.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-b border-emerald-100' :
-            'bg-sky-50 text-sky-700 border-b border-sky-100'
+            formNotice.type === 'error' ? 'bg-rose-500/10 text-rose-400 border-b border-rose-500/20' :
+            formNotice.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-b border-emerald-500/20' :
+            'bg-sky-500/10 text-sky-400 border-b border-sky-500/20'
           }`}>
             <span className="flex items-center gap-2">
               <span className="text-[15px]">{formNotice.type === 'error' ? '⚠️' : formNotice.type === 'success' ? '✅' : 'ℹ️'}</span>
               <span>{formNotice.message}</span>
             </span>
-            <button className="text-[16px] leading-[0] font-sans hover:opacity-70 font-bold px-2 py-1" onClick={() => setFormNotice(null)}>×</button>
+            <button className="text-[16px] leading-[0] font-sans hover:opacity-70 font-bold px-2 py-1 cursor-pointer" onClick={() => setFormNotice(null)}>×</button>
           </div>
         )}
 
@@ -540,14 +540,14 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                 
                 {/* Upload attachment Section */}
                 <div className="space-y-3">
-                  <label id="upload-lbl" className="block text-sm font-semibold text-slate-700">Issue Evidence (Photo/Video)</label>
+                  <label id="upload-lbl" className="block text-sm font-semibold text-slate-300">Issue Evidence (Photo/Video)</label>
                   
                   <div 
                     id="dropzone"
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                     onClick={() => document.getElementById('camera-file-input')?.click()}
-                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center min-h-[220px] ${mediaPreview ? 'border-indigo-400 bg-indigo-50/10' : 'border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/20'}`}
+                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center min-h-[220px] ${mediaPreview ? 'border-indigo-500 bg-indigo-500/5' : 'border-white/10 hover:border-indigo-500/60 hover:bg-white/5'}`}
                   >
                     <input 
                       id="camera-file-input"
@@ -590,7 +590,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                             setIsVideo(false);
                             setImageBase64('');
                           }}
-                          className="absolute bottom-2 right-2 bg-rose-600 hover:bg-rose-700 text-white p-2 rounded-full shadow-lg transition"
+                          className="absolute bottom-2 right-2 bg-rose-600 hover:bg-rose-700 text-white p-2 rounded-full shadow-lg transition cursor-pointer"
                           title="Remove media"
                         >
                           <Trash2 size={16} />
@@ -598,10 +598,10 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mx-auto">
+                        <div className="w-12 h-12 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-400 mx-auto">
                           <Camera size={24} />
                         </div>
-                        <p className="text-sm font-semibold text-slate-800">Drag or Click to Upload photo/video</p>
+                        <p className="text-sm font-semibold text-white">Drag or Click to Upload photo/video</p>
                         <p className="text-xs text-slate-400 font-medium">Supports pothole, waste pile, water leakage, damages, etc.</p>
                       </div>
                     )}
@@ -612,22 +612,22 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
 
                 {/* Notes Input & Voice Command */}
                 <div className="flex flex-col">
-                  <label id="notes-lbl" className="block text-sm font-semibold text-slate-700 mb-3">Casual Description / Notes</label>
+                  <label id="notes-lbl" className="block text-sm font-semibold text-slate-300 mb-3">Casual Description / Notes</label>
                   
-                  <div className="relative flex-1 min-h-[150px] flex flex-col border border-slate-200 rounded-xl overflow-hidden bg-slate-50 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition">
+                  <div className="relative flex-1 min-h-[150px] flex flex-col border border-white/10 rounded-xl overflow-hidden bg-slate-950/40 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition">
                     <textarea 
                       id="notes-textarea"
                       value={userNotes}
                       onChange={(e) => setUserNotes(e.target.value)}
                       placeholder="e.g. Terrible pothole near sector 4 corner, blocking traffic..."
-                      className="w-full flex-1 p-4 bg-transparent outline-none resize-none text-[14px]"
+                      className="w-full flex-1 p-4 bg-transparent outline-none resize-none text-[14px] text-white placeholder:text-slate-500"
                     />
                     
-                    <div id="input-controls" className="p-2 border-t border-slate-100 flex items-center justify-between bg-white">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500 pl-2">
+                    <div id="input-controls" className="p-2 border-t border-white/5 flex items-center justify-between bg-slate-950/30">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400 pl-2">
                         {isRecording ? (
-                          <span className="flex items-center gap-1.5 font-bold text-red-600">
-                            <span className="w-2.5 h-2.5 bg-red-600 rounded-full animate-ping" />
+                          <span className="flex items-center gap-1.5 font-bold text-rose-500">
+                            <span className="w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping" />
                             Listening...
                           </span>
                         ) : (
@@ -639,7 +639,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                         id="voice-mic-btn"
                         type="button"
                         onClick={triggerVoiceInput}
-                        className={`p-2.5 rounded-full transition flex items-center justify-center shadow-sm ${isRecording ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
+                        className={`p-2.5 rounded-full transition flex items-center justify-center shadow-sm cursor-pointer ${isRecording ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse' : 'bg-white/5 hover:bg-white/10 text-slate-300'}`}
                       >
                         <Mic size={18} className={isRecording ? 'animate-bounce' : ''} />
                       </button>
@@ -652,18 +652,18 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
               {/* Map Position Picker */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label id="location-lbl" className="block text-sm font-semibold text-slate-700">Incident Location Coordinates</label>
+                  <label id="location-lbl" className="block text-sm font-semibold text-slate-300">Incident Location Coordinates</label>
                   <button 
                     id="gps-locate-btn"
                     onClick={attemptGeolocation}
                     type="button"
-                    className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-bold transition"
+                    className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-bold transition cursor-pointer"
                   >
                     <MapPin size={14} /> {locating ? 'GPS Loading...' : 'Reset Geolocation'}
                   </button>
                 </div>
 
-                <div id="picker-map-box" className="h-44 rounded-xl overflow-hidden border border-slate-200 shadow-inner relative">
+                <div id="picker-map-box" className="h-44 rounded-xl overflow-hidden border border-white/10 shadow-2xl relative">
                   <MapContainer 
                     mode="select"
                     center={[coordinates.lat, coordinates.lng]}
@@ -678,7 +678,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                   id="submit-ai-classify-btn"
                   onClick={analyzeIssueWithAI}
                   disabled={!mediaPreview}
-                  className={`flex items-center gap-2 font-display font-semibold text-white px-8 py-3 rounded-xl transition ${!mediaPreview ? 'bg-slate-300 cursor-not-allowed text-slate-500' : 'bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg'}`}
+                  className={`flex items-center gap-2 font-display font-semibold text-white px-8 py-3 rounded-xl transition cursor-pointer ${!mediaPreview ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5' : 'bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg'}`}
                 >
                   <Sparkles size={18} />
                   Analyze Issue with Gemini AI
@@ -696,13 +696,13 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
             >
               <div className="relative">
                 <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 animate-pulse blur" />
-                <div className="relative w-20 h-20 bg-white rounded-full flex items-center justify-center text-indigo-600 shadow-xl border">
-                  <Loader2 size={36} className="animate-spin text-indigo-600" />
+                <div className="relative w-20 h-20 bg-slate-950 rounded-full flex items-center justify-center text-indigo-400 shadow-xl border border-white/10">
+                  <Loader2 size={36} className="animate-spin text-indigo-400" />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-xl font-semibold text-slate-900">Calling Core Dispatch Intelligence...</h3>
-                <p className="text-slate-500 text-sm max-w-sm">Gemini AI is examining your image, analyzing severity and auto-drafting an official public grievance petition.</p>
+                <h3 className="text-xl font-semibold text-white">Calling Core Dispatch Intelligence...</h3>
+                <p className="text-slate-400 text-sm max-w-sm">Gemini AI is examining your image, analyzing severity and auto-drafting an official public grievance petition.</p>
               </div>
             </motion.div>
           )}
@@ -712,13 +712,13 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-6 flex-1"
+              className="space-y-6 flex-1 text-slate-200"
             >
-              <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl flex items-start gap-3">
-                <Sparkles size={20} className="text-indigo-600 flex-shrink-0 mt-0.5" />
+              <div className="p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl flex items-start gap-3">
+                <Sparkles size={20} className="text-indigo-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-indigo-900 text-sm">Gemini Audit Completed!</h4>
-                  <p className="text-xs text-indigo-700 font-medium">Please review, make any necessary adjustments to the fields, and finalize your public report.</p>
+                  <h4 className="font-bold text-indigo-300 text-sm">Gemini Audit Completed!</h4>
+                  <p className="text-xs text-indigo-400/80 font-medium animate-pulse">Please review, make any necessary adjustments to the fields, and finalize your public report.</p>
                 </div>
               </div>
 
@@ -726,12 +726,12 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                 {/* Left controls */}
                 <div className="space-y-4">
                   <div>
-                    <label id="review-cat" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Issue Type Category</label>
+                    <label id="review-cat" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Issue Type Category</label>
                     <select 
                       id="draft-category"
                       value={aiDraft.category}
                       onChange={(e) => handleReviewChange('category', e.target.value as CivicCategory)}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-indigo-500 font-medium focus:ring-1 focus:ring-indigo-100 text-slate-800"
+                      className="w-full border border-white/10 rounded-lg px-3 py-2.5 text-sm bg-slate-950/80 text-white outline-indigo-500 font-medium focus:ring-1 focus:ring-indigo-500/30"
                     >
                       <option value="Pothole">Pothole</option>
                       <option value="Streetlight">Streetlight</option>
@@ -743,7 +743,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                   </div>
 
                   <div>
-                    <label id="review-severity" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Severity Level</label>
+                    <label id="review-severity" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Severity Level</label>
                     <div className="grid grid-cols-3 gap-2">
                       {(['Low', 'Medium', 'High'] as SeverityLevel[]).map((lev) => (
                         <button 
@@ -751,7 +751,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                           key={lev}
                           type="button"
                           onClick={() => handleReviewChange('severity', lev)}
-                          className={`py-2 px-3 border rounded-lg text-xs font-bold text-center transition ${aiDraft.severity === lev ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-800'}`}
+                          className={`py-2 px-3 border rounded-lg text-xs font-bold text-center transition cursor-pointer ${aiDraft.severity === lev ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-slate-950/80 border-white/5 hover:bg-white/5 text-slate-300'}`}
                         >
                           {lev}
                         </button>
@@ -760,22 +760,22 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                   </div>
 
                   <div>
-                    <label id="review-reasoning" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">AI Severity Reasoning</label>
+                    <label id="review-reasoning" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">AI Severity Reasoning</label>
                     <textarea 
                       id="draft-severity-reasoning"
                       value={aiDraft.severity_reasoning}
                       onChange={(e) => handleReviewChange('severity_reasoning', e.target.value)}
-                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 text-xs bg-slate-50 text-slate-600 outline-indigo-500 resize-none h-14"
+                      className="w-full border border-white/10 rounded-lg px-3.5 py-2 text-xs bg-slate-950/60 text-slate-300 outline-indigo-500 resize-none h-14"
                     />
                   </div>
 
                   <div>
-                    <label id="review-dept" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Assigned Service Board (Department)</label>
+                    <label id="review-dept" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Assigned Service Board (Department)</label>
                     <select 
                       id="draft-dept"
                       value={aiDraft.responsible_department}
                       onChange={(e) => handleReviewChange('responsible_department', e.target.value)}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-indigo-500 focus:ring-1 focus:ring-indigo-100 text-slate-800 font-semibold"
+                      className="w-full border border-white/10 rounded-lg px-3 py-2.5 text-sm bg-slate-950/80 text-white outline-indigo-500 focus:ring-1 focus:ring-indigo-500/30 font-semibold"
                     >
                       <option value="Municipal Corporation">Municipal Corporation</option>
                       <option value="Electricity Board">Electricity Board</option>
@@ -787,49 +787,49 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
 
                 {/* Right control - petition box */}
                 <div className="flex flex-col">
-                  <label id="review-text" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Formal Grievance Petition Text</label>
+                  <label id="review-text" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Formal Grievance Petition Text</label>
                   <textarea 
                     id="draft-formal-complaint"
                     value={aiDraft.formal_complaint_text}
                     onChange={(e) => handleReviewChange('formal_complaint_text', e.target.value)}
-                    className="w-full flex-1 border border-slate-200 rounded-lg p-4 font-mono text-xs leading-relaxed text-slate-700 outline-indigo-500 bg-amber-50/10 min-h-[180px] focus:ring-1 focus:ring-indigo-100 shadow-inner"
+                    className="w-full flex-1 border border-white/10 rounded-lg p-4 font-mono text-xs leading-relaxed text-slate-200 outline-indigo-500 bg-slate-950/60 min-h-[180px] focus:ring-1 focus:ring-indigo-500/30 shadow-inner"
                   />
                 </div>
               </div>
 
               {/* Duplicate modal overlay */}
               {detectedDuplicate && (
-                <div id="duplicate-warning-modal" className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 animate-fade-in">
+                <div id="duplicate-warning-modal" className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
                   <motion.div 
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="bg-white max-w-lg w-full rounded-2xl overflow-hidden shadow-2xl border border-amber-200"
+                    className="bg-slate-900 max-w-lg w-full rounded-2xl overflow-hidden shadow-2xl border border-amber-500/30"
                   >
-                    <div id="warning-head" className="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-5 flex items-center gap-3">
+                    <div id="warning-head" className="bg-gradient-to-r from-amber-500/10 to-amber-600/10 border-b border-white/5 p-5 flex items-center gap-3 text-amber-400">
                       <AlertTriangle size={24} className="animate-bounce" />
                       <div>
                         <h3 className="font-display font-semibold text-lg">Similar Active Issue Found</h3>
-                        <p className="text-white/80 text-[11px] font-medium">Within 100 meters, this real-world problem is already reported.</p>
+                        <p className="text-slate-400 text-[11px] font-medium">Within 100 meters, this real-world problem is already reported.</p>
                       </div>
                     </div>
 
                     <div className="p-6 space-y-4">
-                      <p className="text-xs text-slate-600 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                      <p className="text-xs text-slate-300 bg-amber-500/5 p-3 rounded-lg border border-amber-500/20">
                         <strong>AI Auditor analysis:</strong> {duplicateReasoning}
                       </p>
 
-                      <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Existing Active Report #{detectedDuplicate.id.slice(0, 5)}</span>
-                        <h4 className="font-bold text-slate-800 text-[14px] mt-0.5">{detectedDuplicate.category} ({detectedDuplicate.status})</h4>
-                        <p className="text-xs text-slate-500 mt-1 line-clamp-3 italic leading-relaxed">
+                      <div className="border border-white/10 rounded-xl p-4 bg-slate-950/40">
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Existing Active Report #{detectedDuplicate.id.slice(0, 5)}</span>
+                        <h4 className="font-bold text-white text-[14px] mt-0.5">{detectedDuplicate.category} ({detectedDuplicate.status})</h4>
+                        <p className="text-xs text-slate-400 mt-1 line-clamp-3 italic leading-relaxed">
                           "{detectedDuplicate.formal_complaint_text}"
                         </p>
                         {detectedDuplicate.photoUrl && (
-                          <div className="mt-2.5 w-full h-24 rounded-lg overflow-hidden border">
+                          <div className="mt-2.5 w-full h-24 rounded-lg overflow-hidden border border-white/5">
                             <img src={detectedDuplicate.photoUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           </div>
                         )}
-                        <div className="mt-3 flex items-center gap-2 text-xs font-bold text-indigo-600">
+                        <div className="mt-3 flex items-center gap-2 text-xs font-bold text-indigo-400">
                           <span>🎯 {detectedDuplicate.confirmations || 1} Citizens support this ticket</span>
                         </div>
                       </div>
@@ -838,7 +838,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                         <button 
                           id="agree-confirm-duplicate-btn"
                           onClick={confirmDuplicateReport}
-                          className="flex-1 text-center py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1.5"
+                          className="flex-1 text-center py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <Check size={14} /> Yes, Confirm & Support Ticket
                         </button>
@@ -848,7 +848,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                             setDetectedDuplicate(null);
                             executeReportSaving();
                           }}
-                          className="flex-1 text-center py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition"
+                          className="flex-1 text-center py-2.5 px-4 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold rounded-lg transition cursor-pointer"
                         >
                           It's different, submit anyway
                         </button>
@@ -858,7 +858,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                             setDetectedDuplicate(null);
                             setStage('review');
                           }}
-                          className="py-2.5 px-4 border border-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition"
+                          className="py-2.5 px-4 border border-white/10 text-slate-300 text-xs font-semibold rounded-lg transition cursor-pointer hover:bg-white/5"
                         >
                           Keep Editing
                         </button>
@@ -869,11 +869,11 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
               )}
 
               {/* Action Buttons */}
-              <div id="review-cta-row" className="pt-4 flex items-center justify-between border-t border-slate-100">
+              <div id="review-cta-row" className="pt-4 flex items-center justify-between border-t border-white/5">
                 <button 
                   id="review-back-btn"
                   onClick={() => setStage('collect')}
-                  className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded-xl transition"
+                  className="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-semibold rounded-xl transition cursor-pointer"
                 >
                   Back to Form
                 </button>
@@ -881,7 +881,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                 <button 
                   id="review-submit-final-btn"
                   onClick={handleProceedSubmit}
-                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-display font-semibold px-8 py-2.5 rounded-xl transition shadow-md hover:shadow-lg"
+                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-display font-semibold px-8 py-2.5 rounded-xl transition shadow-md hover:shadow-lg cursor-pointer"
                 >
                   <FileText size={18} />
                   Submit Official Complaint
@@ -897,9 +897,9 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
               animate={{ opacity: 1 }}
               className="flex-1 flex flex-col items-center justify-center text-center p-10 space-y-4"
             >
-              <Loader2 size={36} className="animate-spin text-indigo-600" />
+              <Loader2 size={36} className="animate-spin text-indigo-400" />
               <div className="space-y-1">
-                <h3 className="text-lg font-semibold text-slate-900">Uploading Civic Ticket...</h3>
+                <h3 className="text-lg font-semibold text-white">Uploading Civic Ticket...</h3>
                 <p className="text-slate-400 text-xs">Saving report details, image assets to Cloud and registering dispatch board.</p>
               </div>
             </motion.div>

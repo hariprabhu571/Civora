@@ -30,13 +30,13 @@ export default function MapContainer({
   const createMarkerHtml = (color: string, label: string) => `
     <div class="relative flex items-center justify-center">
       <!-- Glow effect -->
-      <div class="absolute w-8 h-8 rounded-full bg-${color}-500/30 animate-ping duration-1000"></div>
+      <div class="absolute w-8 h-8 rounded-full bg-${color}-500/25 animate-ping" style="animation-duration: 2s;"></div>
       <!-- Marker body -->
-      <div class="relative w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center border-2 border-${color}-500 text-${color}-600 font-bold text-xs">
+      <div class="relative w-7 h-7 rounded-full bg-slate-950 shadow-lg flex items-center justify-center border border-${color}-500 text-${color}-400 font-extrabold text-[11px] glowing-pin-${color}">
         ${label}
       </div>
       <!-- Tail -->
-      <div class="absolute -bottom-1 w-2.5 h-2.5 rotate-45 bg-${color}-500 border-r border-b border-${color}-500"></div>
+      <div class="absolute -bottom-1 w-2.5 h-2.5 rotate-45 bg-slate-950 border-r border-b border-${color}-500"></div>
     </div>
   `;
 
@@ -67,11 +67,11 @@ export default function MapContainer({
       className: 'custom-leaflet-pin-select',
       html: `
         <div class="relative flex items-center justify-center">
-          <div class="absolute w-9 h-9 rounded-full bg-blue-500/40 animate-pulse duration-700"></div>
-          <div class="relative w-8 h-8 rounded-full bg-blue-600 shadow-lg flex items-center justify-center border-2 border-white text-white">
+          <div class="absolute w-9 h-9 rounded-full bg-indigo-500/20 animate-pulse"></div>
+          <div class="relative w-8 h-8 rounded-full bg-slate-950 shadow-lg flex items-center justify-center border border-indigo-500 text-indigo-400 glowing-pin-indigo">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
           </div>
-          <div class="absolute -bottom-1 w-2 h-2 rotate-45 bg-blue-600"></div>
+          <div class="absolute -bottom-1 w-2 h-2 rotate-45 bg-slate-950 border-r border-b border-indigo-500"></div>
         </div>
       `,
       iconSize: [32, 32],
@@ -106,8 +106,8 @@ export default function MapContainer({
       fadeAnimation: true
     }).setView(center, zoom);
 
-    // Standard high-quality responsive civic tiling (CartoDB Positron for modern elegant flat gray styling)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    // Standard high-quality responsive civic tiling (CartoDB Dark Matter for futuristic premium dark theme)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 20
     }).addTo(map);
@@ -216,34 +216,39 @@ export default function MapContainer({
 
       // Prepare custom popup card content
       const statusBadgeColors = 
-        report.status === 'Resolved' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
-        report.status === 'Under Review' ? 'bg-cyan-100 text-cyan-800 border-cyan-300' :
-        'bg-rose-100 text-rose-800 border-rose-300';
+        report.status === 'Resolved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+        report.status === 'Under Review' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' :
+        'bg-rose-500/10 text-rose-400 border-rose-500/30';
+
+      const severityBadgeColors = 
+        report.severity === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
+        report.severity === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+        'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
 
       const popupHtml = document.createElement('div');
-      popupHtml.className = 'w-64 p-1 flex flex-col font-sans';
+      popupHtml.className = 'w-64 p-1 flex flex-col font-sans text-slate-100';
       popupHtml.innerHTML = `
-        <div class="flex items-start gap-2 mb-2">
+        <div class="flex items-start gap-2.5 mb-2.5">
           ${report.photoUrl ? `
-            <div class="w-12 h-12 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+            <div class="w-12 h-12 rounded-lg overflow-hidden bg-slate-900 flex-shrink-0 border border-slate-800">
               <img src="${report.photoUrl}" referrerPolicy="no-referrer" class="w-full h-full object-cover">
             </div>
           ` : `
-            <div class="w-12 h-12 rounded-md bg-gray-100 border flex items-center justify-center flex-shrink-0">
-              <span class="text-gray-400 text-xs">No img</span>
+            <div class="w-12 h-12 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center flex-shrink-0">
+              <span class="text-slate-500 text-[10px] font-bold">NO IMG</span>
             </div>
           `}
           <div class="min-w-0 flex-1">
-            <h4 class="font-bold text-gray-900 border-b border-gray-100 pb-0.5 text-sm">${report.category}</h4>
-            <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-              <span class="px-1.5 py-0.5 text-[10px] rounded border ${statusBadgeColors}">${report.status}</span>
-              <span class="px-1.5 py-0.5 text-[10px] rounded border bg-slate-100 text-slate-800 border-slate-300 font-semibold">${report.severity}</span>
+            <h4 class="font-black text-slate-100 border-b border-slate-800 pb-1 text-sm truncate tracking-tight">${report.category}</h4>
+            <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full border ${statusBadgeColors}">${report.status}</span>
+              <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full border ${severityBadgeColors}">${report.severity}</span>
             </div>
           </div>
         </div>
-        <p class="text-xs text-gray-500 mb-2 truncate">${report.userNotes || 'No notes description provided.'}</p>
-        <button id="detail-btn-${report.id}" class="w-full text-center py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-semibold shadow hover:shadow-md transition">
-          View Details
+        <p class="text-[11px] text-slate-400 mb-3 line-clamp-2 leading-relaxed italic">"${report.userNotes || 'No notes description provided.'}"</p>
+        <button id="detail-btn-${report.id}" class="w-full text-center py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer">
+          View Audit Details &rarr;
         </button>
       `;
 
@@ -284,10 +289,10 @@ export default function MapContainer({
       <div 
         ref={mapElementRef} 
         id={`map-${mode}`}
-        className="w-full h-full border border-slate-200/80 shadow-inner bg-slate-50 relative"
+        className="w-full h-full border border-white/10 rounded-2xl shadow-2xl bg-slate-955 relative"
       />
       {mode === 'select' && (
-        <div id="drag-tip" className="absolute bottom-3 left-3 bg-indigo-900/90 text-white text-[11px] px-2.5 py-1 rounded shadow-md pointer-events-none z-10 font-medium">
+        <div id="drag-tip" className="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur-md text-white text-[10px] uppercase tracking-wider font-extrabold px-3 py-1.5 border border-white/10 rounded-xl shadow-2xl pointer-events-none z-10">
           💡 Drag pin or tap map to update location
         </div>
       )}

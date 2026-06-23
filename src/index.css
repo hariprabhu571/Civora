@@ -8,29 +8,91 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Base custom styles to enhance Leaflet map look is essential */
+/* Glassmorphism panel utility */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-heavy {
+  background: rgba(10, 15, 30, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* Custom glowing pin box shadows */
+.glowing-pin-red {
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.65), inset 0 0 4px rgba(239, 68, 68, 0.3);
+}
+.glowing-pin-amber {
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.65), inset 0 0 4px rgba(245, 158, 11, 0.3);
+}
+.glowing-pin-emerald {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.65), inset 0 0 4px rgba(16, 185, 129, 0.3);
+}
+.glowing-pin-indigo {
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.65), inset 0 0 4px rgba(99, 102, 241, 0.3);
+}
+
+/* Leaflet dark theme customization */
 .leaflet-container {
   width: 100%;
   height: 100%;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   z-index: 1;
   font-family: var(--font-sans);
+  background: #030712 !important;
 }
 
-/* Custom styling for Leaflet Popups to match modern design */
 .leaflet-popup-content-wrapper {
-  background: white !important;
-  color: #1f2937 !important;
-  border-radius: 0.75rem !important;
+  background: rgba(15, 23, 42, 0.88) !important;
+  color: #f8fafc !important;
+  border-radius: 1rem !important;
   padding: 0.25rem !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(99, 102, 241, 0.15) !important;
 }
 
 .leaflet-popup-tip {
-  background: white !important;
+  background: rgba(15, 23, 42, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Smooth fading scrollbar */
+.leaflet-popup-close-button {
+  color: #94a3b8 !important;
+  padding: 8px 10px 0 0 !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: #f8fafc !important;
+}
+
+.leaflet-bar {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 0.75rem !important;
+  overflow: hidden !important;
+}
+
+.leaflet-bar a {
+  background-color: rgba(15, 23, 42, 0.9) !important;
+  color: #f8fafc !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.2s !important;
+}
+
+.leaflet-bar a:hover {
+  background-color: #1e293b !important;
+  color: #6366f1 !important;
+}
+
+/* Custom dark scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -41,10 +103,20 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.3);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Waveform pulse and flow animations */
+@keyframes audioWaveform {
+  0%, 100% { height: 4px; }
+  50% { height: 28px; }
+}
+
+.waveform-bar {
+  animation: audioWaveform 1.2s ease-in-out infinite;
 }
