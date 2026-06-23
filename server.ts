@@ -19,10 +19,10 @@ try {
     firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
     const firebaseServerApp = initializeFirebaseApp(firebaseConfig);
     serverStorage = getFirebaseStorage(firebaseServerApp);
-    console.log('[Community Hero App] Server-side Firebase Storage successfully initialized.');
+    console.log('[Civora App] Server-side Firebase Storage successfully initialized.');
   }
 } catch (err) {
-  console.error('[Community Hero App] Failed to initialize server-side Firebase fallback:', err);
+  console.error('[Civora App] Failed to initialize server-side Firebase fallback:', err);
 }
 
 // Initialize Express
@@ -78,7 +78,7 @@ app.post('/api/analyze-issue', async (req, res) => {
     const cleanMimeType = mimeType || 'image/jpeg';
 
     const prompt = `
-      You are an expert citizen service dispatcher system called "Community Hero AI". 
+      You are an expert citizen service dispatcher system called "Civora AI". 
       Your task is to analyze the provided image of a city civic/municipal issue (which is reported by a resident) 
       and combine it with their raw notes or transcribed voice notes: "${userNotesByVoiceOrText || '(No additional notes provided)'}".
 
@@ -162,14 +162,14 @@ app.post('/api/check-duplicate', async (req, res) => {
     const { newReportDetails, existingReports } = req.body;
 
     console.log('\n========================================');
-    console.log('[Community Hero API] /api/check-duplicate called!');
-    console.log(`[Community Hero API] New Issue Category: "${newReportDetails?.category}"`);
-    console.log(`[Community Hero API] New Description: "${newReportDetails?.formal_complaint_text?.substring(0, 80)}..."`);
-    console.log(`[Community Hero API] New User Notes: "${newReportDetails?.userNotes || 'None'}"`);
-    console.log(`[Community Hero API] Number of candidates to evaluate within 110m radius: ${existingReports?.length || 0}`);
+    console.log('[Civora API] /api/check-duplicate called!');
+    console.log(`[Civora API] New Issue Category: "${newReportDetails?.category}"`);
+    console.log(`[Civora API] New Description: "${newReportDetails?.formal_complaint_text?.substring(0, 80)}..."`);
+    console.log(`[Civora API] New User Notes: "${newReportDetails?.userNotes || 'None'}"`);
+    console.log(`[Civora API] Number of candidates to evaluate within 110m radius: ${existingReports?.length || 0}`);
 
     if (!newReportDetails || !existingReports || !Array.isArray(existingReports) || existingReports.length === 0) {
-      console.log('[Community Hero API] Skipped comparison: No active reports of same category exist nearby.');
+      console.log('[Civora API] Skipped comparison: No active reports of same category exist nearby.');
       console.log('========================================\n');
       res.json({ isDuplicate: false, confidence: 0, reasoning: 'No existing reports in immediate vicinity to match.' });
       return;
@@ -183,7 +183,7 @@ app.post('/api/check-duplicate', async (req, res) => {
     const ai = getGeminiClient();
 
     const prompt = `
-      You are the "Community Hero Civic Auditor" bot. Your task is to analyze details of a newly reported civic issue and compare it against the list of near-by existing active reports in the same visual area.
+      You are the "Civora Civic Auditor" bot. Your task is to analyze details of a newly reported civic issue and compare it against the list of near-by existing active reports in the same visual area.
       We want to prevent double-logging of the exact same real-world physical asset defect (e.g. the exact same pothole, the exact same broken street light beam, the exact same pile of garbage bags at the corner).
 
       --- NEW REPORT INPUT DETAILS ---
@@ -209,7 +209,7 @@ app.post('/api/check-duplicate', async (req, res) => {
       Respond strictly in JSON.
     `;
 
-    console.log('[Community Hero API] Prompting Gemini 2.5 Flash for duplicate screening...');
+    console.log('[Civora API] Prompting Gemini 2.5 Flash for duplicate screening...');
     
     let response: any;
     let attempts = 3; // 1 initial attempt + 2 retries
@@ -218,7 +218,7 @@ app.post('/api/check-duplicate', async (req, res) => {
     for (let attempt = 1; attempt <= attempts; attempt++) {
       try {
         if (attempt > 1) {
-          console.log(`[Community Hero API] Retrying Gemini content generation... Attempt ${attempt}/${attempts}`);
+          console.log(`[Civora API] Retrying Gemini content generation... Attempt ${attempt}/${attempts}`);
         }
         response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
@@ -259,11 +259,11 @@ app.post('/api/check-duplicate', async (req, res) => {
 
         if (isTransient && attempt < attempts) {
           const delayMs = attempt * 1000; // 1s then 2s
-          console.warn(`[Community Hero API] Gemini transient error detected (Code: ${errorStatus}, msg: "${errorMessage}"). Retrying in ${delayMs}ms...`);
+          console.warn(`[Civora API] Gemini transient error detected (Code: ${errorStatus}, msg: "${errorMessage}"). Retrying in ${delayMs}ms...`);
           await new Promise((resolve) => setTimeout(resolve, delayMs));
         } else {
           // Re-throw if not transient or if we ran out of attempts
-          console.error(`[Community Hero API] Gemini generation failed permanently on attempt ${attempt}/${attempts}. Error:`, error);
+          console.error(`[Civora API] Gemini generation failed permanently on attempt ${attempt}/${attempts}. Error:`, error);
           throw error;
         }
       }
@@ -274,10 +274,10 @@ app.post('/api/check-duplicate', async (req, res) => {
     }
 
     const responseText = response.text || '{}';
-    console.log('[Community Hero API] Gemini response received raw:\n', responseText);
+    console.log('[Civora API] Gemini response received raw:\n', responseText);
 
     const parsedJson = safeJsonParse(responseText);
-    console.log('[Community Hero API] Parsed Verdict outcome:', parsedJson);
+    console.log('[Civora API] Parsed Verdict outcome:', parsedJson);
     console.log('========================================\n');
 
     res.json(parsedJson);
@@ -303,7 +303,7 @@ app.post('/api/generate-trend', async (req, res) => {
     const ai = getGeminiClient();
 
     const prompt = `
-      You are the "Community Hero Civic Officer". Write a short, highly professional, encouraging, and informative plain-English paragraph summary (maximum of 3 or 4 engaging sentences) analyzing the community issue reports logged in the last 7 days.
+      You are the "Civora Civic Officer". Write a short, highly professional, encouraging, and informative plain-English paragraph summary (maximum of 3 or 4 engaging sentences) analyzing the community issue reports logged in the last 7 days.
       
       Here is the raw list of reports logged:
       ${reports.map((r: any) => `- Under Category: "${r.category}" at approximate coordinates (${r.location.lat.toFixed(4)}, ${r.location.lng.toFixed(4)}) with "${r.severity}" severity.`).join('\n')}
@@ -343,7 +343,7 @@ app.post('/api/upload-image', async (req, res) => {
     const storageRef = firebaseStorageRef(serverStorage, fileName);
     
     // Upload standard base64 data_url server-side
-    console.log('[Community Hero API] Proxying image upload to firebase storage target:', fileName);
+    console.log('[Civora API] Proxying image upload to firebase storage target:', fileName);
     const uploadSnapshot = await firebaseUploadString(storageRef, imageBase64, 'data_url');
     const downloadUrl = await firebaseGetDownloadURL(uploadSnapshot.ref);
     
@@ -373,7 +373,7 @@ async function bootServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Community Hero App] Server successfully booted. Listening on port ${PORT}`);
+    console.log(`[Civora App] Server successfully booted. Listening on port ${PORT}`);
   });
 }
 

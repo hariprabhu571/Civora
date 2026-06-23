@@ -139,7 +139,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-lg md:text-xl font-display font-bold tracking-tight text-slate-900 flex items-center gap-1.5">
-                Community Hero 
+                Civora
               </h1>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest leading-none mt-0.5">District Civic Node</p>
             </div>
@@ -458,7 +458,7 @@ export default function App() {
       {/* Humble Footer footer branding */}
       <footer id="app-footer" className="bg-white border-t py-4 text-center text-[10px] text-slate-400 font-bold shrink-0">
         <div className="max-w-7xl mx-auto">
-          <span>🛡️ COMMUNITY HERO COOPERATIVE &copy; {new Date().getFullYear()} — UNITING NEIGHBORHOODS VIA AI</span>
+          <span>🛡️ CIVORA COOPERATIVE &copy; {new Date().getFullYear()} — UNITING NEIGHBORHOODS VIA AI</span>
         </div>
       </footer>
 

@@ -69,7 +69,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
 
   const triggerAlert = (message: string, type: 'error' | 'success' | 'info' = 'error') => {
     showFormNotice(message, type);
-    console.warn('Community Hero Notification:', message);
+    console.warn('Civora Notification:', message);
   };
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
