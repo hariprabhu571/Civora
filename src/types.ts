@@ -30,6 +30,10 @@ export interface CivicReport {
   timestamp: any; // Firestore Timestamp
   confirmations: number;
   confirmedUsers: string[]; // local storage UUIDs of users who confirmed this report
+  resolutionPhotoUrl?: string;
+  resolutionVerified?: 'verified' | 'unresolved' | 'none';
+  resolutionConfidence?: number;
+  resolutionExplanation?: string;
 }
 
 export interface AIDraftData {

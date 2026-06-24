@@ -33,6 +33,9 @@ const PORT = 3000;
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
+// Serve local uploads folder statically for offline fallbacks
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 // Initialize Google Gen AI client safely
 const getGeminiClient = () => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -474,6 +477,146 @@ app.post('/api/generate-trend', async (req, res) => {
   }
 });
 
+// Helper to convert an image source (URL or base64 data_url) to Gemini inlineData format
+async function getImagePart(imageStr: string) {
+  try {
+    if (imageStr.startsWith('http://') || imageStr.startsWith('https://')) {
+      console.log(`[Civora API] Fetching external image URL for Gemini processing: ${imageStr.substring(0, 80)}...`);
+      const res = await fetch(imageStr);
+      if (!res.ok) {
+        throw new Error(`Failed to download image from URL. Status: ${res.status}`);
+      }
+      const buffer = await res.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString('base64');
+      let mimeType = 'image/jpeg';
+      const contentType = res.headers.get('content-type');
+      if (contentType) mimeType = contentType;
+      return {
+        inlineData: {
+          data: base64,
+          mimeType
+        }
+      };
+    } else {
+      const base64Data = imageStr.replace(/^data:image\/\w+;base64,/, '');
+      const mimeMatch = imageStr.match(/^data:(image\/\w+);base64,/);
+      const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      return {
+        inlineData: {
+          data: base64Data,
+          mimeType
+        }
+      };
+    }
+  } catch (err: any) {
+    console.error('[Civora API] Error converting image to Gemini parts:', err);
+    throw new Error(`Failed to parse image input: ${err.message}`);
+  }
+}
+
+// API: Verify issue resolution by comparing before vs after photographs with Gemini
+app.post('/api/verify-resolution', async (req, res) => {
+  try {
+    const { beforeImage, afterImage, category, gpsMetadata } = req.body;
+
+    if (!beforeImage) {
+      res.status(400).json({ error: 'beforeImage parameter is required.' });
+      return;
+    }
+    if (!afterImage) {
+      res.status(400).json({ error: 'afterImage parameter is required.' });
+      return;
+    }
+
+    const ai = getGeminiClient();
+
+    console.log('[Civora API] Preparing image parts for resolution validation...');
+    const beforePart = await getImagePart(beforeImage);
+    const afterPart = await getImagePart(afterImage);
+
+    let gpsPromptPart = '';
+    if (gpsMetadata) {
+      const { distanceMeters, beforeCoords, afterCoords } = gpsMetadata;
+      gpsPromptPart = `
+      GEOTAG SECURITY AUDIT METADATA:
+      - Incident reported coordinates: [Latitude: ${beforeCoords?.[0]?.toFixed(6)}, Longitude: ${beforeCoords?.[1]?.toFixed(6)}]
+      - Resolution photo captured coordinates: [Latitude: ${afterCoords?.[0]?.toFixed(6)}, Longitude: ${afterCoords?.[1]?.toFixed(6)}]
+      - Calculated geographical distance between capture spots: ${distanceMeters?.toFixed(1)} meters.
+
+      Use this metadata to verify if the operator is physically present at the same scene. If the distance is very high (e.g. over 150 meters) and the background doesn't match, you should be extremely skeptical and verify whether the repair is authentic or flagged as unresolved/invalid location.
+      `;
+    }
+
+    const prompt = `
+      You are the "Civora Civic Resolution Auditor". Your task is to perform visual and geographical validation of civic repair works by comparing two images:
+      1. The BEFORE photo (showing a logged civic/municipal defect of category: "${category || 'Other'}").
+      2. The AFTER photo (showing the exact same physical location/defect, purportedly repaired).
+
+      ${gpsPromptPart}
+
+      Carefully compare the two images and review any geotag metadata:
+      - Has the civic issue been successfully repaired/resolved?
+      - Look at the location markers, background buildings, street surfaces, trees, poles, or fences to ensure it's the same physical spot.
+      - Check if the defect (e.g. pothole filled, garbage removed, streetlight glowing/fixed, water leak stopped) is indeed corrected.
+
+      Provide your response in a single JSON object conforming strictly to this typescript schema:
+      - verified: One of the string literals: "verified" (if successfully repaired/fixed) or "unresolved" (if still broken, not fixed, or the image doesn't show a repair/shows a different spot)
+      - confidence: A percentage integer between 0 and 100 representing your assessment confidence.
+      - explanation: A clear, professional, public-facing single-sentence explanation (maximum of 2 sentences) describing what you observed and why you reached this verdict. Include a mention of the geotag location verification if relevant.
+
+      Respond strictly in JSON format. Do not include markdown wraps.
+    `;
+
+    console.log('[Civora API] Prompting Gemini for before vs after resolution verification...');
+
+    const response = await generateContentWithFallback(ai, {
+      preferredModel: 'gemini-3.5-flash',
+      contents: [
+        { text: "BEFORE photo showing reported issue:" },
+        beforePart,
+        { text: "AFTER photo showing claimed resolution:" },
+        afterPart,
+        { text: prompt }
+      ],
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: {
+            verified: {
+              type: 'STRING',
+              enum: ['verified', 'unresolved']
+            },
+            confidence: {
+              type: 'INTEGER'
+            },
+            explanation: {
+              type: 'STRING'
+            }
+          },
+          required: ['verified', 'confidence', 'explanation']
+        }
+      }
+    });
+
+    const resultText = response.text;
+    if (!resultText) {
+      throw new Error('Empty response received from resolution validation model.');
+    }
+
+    const parsedJson = safeJsonParse(resultText);
+    console.log('[Civora API] Resolution verification parsed successfully:', parsedJson);
+    res.json(parsedJson);
+
+  } catch (error: any) {
+    console.error('[Civora API] Error in verify-resolution endpoint:', error);
+    res.status(500).json({ 
+      error: 'Failed to verify resolution', 
+      details: error.message || error 
+    });
+  }
+});
+
 // API: Secure upload image from base64 via server to bypass browser storage CORS constraints
 app.post('/api/upload-image', async (req, res) => {
   try {
@@ -482,24 +625,44 @@ app.post('/api/upload-image', async (req, res) => {
       res.status(400).json({ error: 'imageBase64 parameter is required' });
       return;
     }
-    
-    if (!serverStorage) {
-      throw new Error('Server-side Firebase Storage has not been configured or config file was missing.');
+
+    const uniqueId = Math.random().toString(36).substring(2, 10);
+
+    // Try serverStorage first if configured
+    if (serverStorage) {
+      try {
+        const fileName = `reports/photo_${uniqueId}.jpg`;
+        const storageRef = firebaseStorageRef(serverStorage, fileName);
+        
+        console.log('[Civora API] Proxying image upload to firebase storage target:', fileName);
+        const uploadSnapshot = await firebaseUploadString(storageRef, imageBase64, 'data_url');
+        const downloadUrl = await firebaseGetDownloadURL(uploadSnapshot.ref);
+        
+        res.json({ downloadUrl });
+        return;
+      } catch (storageErr: any) {
+        console.warn('[Civora API] Firebase Storage upload failed, falling back to local file storage:', storageErr.message || storageErr);
+      }
     }
 
-    // Generate a random ID for the storage reference to avoid collision
-    const uniqueId = Math.random().toString(36).substring(2, 10);
-    const fileName = `reports/photo_${uniqueId}.jpg`;
-    const storageRef = firebaseStorageRef(serverStorage, fileName);
-    
-    // Upload standard base64 data_url server-side
-    console.log('[Civora API] Proxying image upload to firebase storage target:', fileName);
-    const uploadSnapshot = await firebaseUploadString(storageRef, imageBase64, 'data_url');
-    const downloadUrl = await firebaseGetDownloadURL(uploadSnapshot.ref);
-    
-    res.json({ downloadUrl });
+    // Local file fallback
+    console.log('[Civora API] Using local disk fallback for image storage.');
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const fileName = `photo_${uniqueId}.jpg`;
+    const filePath = path.join(uploadsDir, fileName);
+
+    // Clean up the base64 string if it contains metadata prefix
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+
+    // Return the URL matching the static directory server endpoint
+    res.json({ downloadUrl: `/uploads/${fileName}` });
   } catch (err: any) {
-    console.error('Server-side upload failed:', err);
+    console.error('Server-side upload failed completely:', err);
     res.status(500).json({ error: 'Server-side upload failed', details: err.message || err });
   }
 });
