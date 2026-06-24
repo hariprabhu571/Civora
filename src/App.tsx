@@ -21,7 +21,9 @@ import {
   Users,
   ChevronRight,
   X,
-  Smartphone
+  Smartphone,
+  Calendar,
+  FileWarning
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -101,12 +103,16 @@ export default function App() {
   const selectedReportDetails = reports.find(r => r.id === selectedReportId);
 
   return (
-    <div className="bg-[#030712] text-slate-100 min-h-screen flex flex-col font-sans select-none relative overflow-x-hidden antialiased">
+    <div className="bg-[#06080f] text-slate-100 min-h-screen flex flex-col font-sans select-none relative overflow-x-hidden antialiased">
       
-      {/* Background elegant grid mesh lines and glowing radial backlight ambients */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/8 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/4 rounded-full blur-[120px] pointer-events-none" />
+      {/* Aurora Background */}
+      <div className="aurora-bg">
+        <div className="aurora-orb aurora-orb-1" />
+        <div className="aurora-orb aurora-orb-2" />
+        <div className="aurora-orb aurora-orb-3" />
+        <div className="aurora-orb aurora-orb-4" />
+        <div className="aurora-grid" />
+      </div>
 
       {/* Toast Alert bar */}
       <AnimatePresence>
@@ -116,21 +122,34 @@ export default function App() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             id="toast-notification"
-            className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] max-w-md w-[90%] px-5 py-4 rounded-2xl shadow-2xl border text-xs font-semibold flex items-center gap-3 backdrop-blur-md ${toastType === 'success' ? 'bg-slate-950/95 border-emerald-500/30 text-emerald-400' : 'bg-slate-950/95 border-indigo-500/30 text-indigo-400'}`}
+            className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] max-w-md w-[90%] rounded-2xl shadow-2xl glass-heavy overflow-hidden ${toastType === 'success' ? 'border-l-2 border-l-emerald-400' : 'border-l-2 border-l-violet-400'}`}
           >
-            <Sparkles size={16} className="text-indigo-400 animate-spin shrink-0" />
-            <div className="flex-1 select-text">
-              <span className="block text-slate-100">{toastMessage}</span>
+            <div className="px-5 py-4 flex items-center gap-3 text-xs font-semibold">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${toastType === 'success' ? 'bg-emerald-500/15' : 'bg-violet-500/15'}`}>
+                <Sparkles size={14} className={`${toastType === 'success' ? 'text-emerald-400' : 'text-violet-400'} animate-pulse`} />
+              </div>
+              <div className="flex-1 select-text">
+                <span className="block text-slate-100">{toastMessage}</span>
+              </div>
+              <button id="close-toast" onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-white transition p-1.5 hover:bg-white/10 rounded-lg cursor-pointer">
+                <X size={15} />
+              </button>
             </div>
-            <button id="close-toast" onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-white transition p-1 hover:bg-white/10 rounded-lg cursor-pointer">
-              <X size={15} />
-            </button>
+            {/* Animated shrinking progress bar */}
+            <div className="h-[2px] w-full bg-white/5">
+              <motion.div
+                initial={{ width: '100%' }}
+                animate={{ width: '0%' }}
+                transition={{ duration: 4.5, ease: 'linear' }}
+                className={`h-full ${toastType === 'success' ? 'bg-gradient-to-r from-emerald-400 to-cyan-400' : 'bg-gradient-to-r from-violet-400 to-cyan-400'}`}
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Main navigation Header */}
-      <header id="app-header" className="sticky top-0 bg-[#030712]/75 backdrop-blur-md border-b border-white/5 z-[1000] px-4 md:px-8 py-4 shadow-2xl shadow-black/50">
+      <header id="app-header" className="sticky top-0 glass-heavy z-[1000] px-4 md:px-8 py-4 shadow-2xl shadow-black/50">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           {/* Logo Brand */}
@@ -139,37 +158,37 @@ export default function App() {
             onClick={() => { setActiveTab('map'); setSelectedReportId(null); }}
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 via-indigo-600 to-indigo-700 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 group-hover:scale-105 active:scale-95 transition-all">
+            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 via-purple-500 to-cyan-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-violet-500/25 group-hover:shadow-violet-500/40 group-hover:scale-105 active:scale-95 transition-all">
               <ShieldAlert size={20} className="group-hover:rotate-6 transition animate-pulse" />
             </div>
             <div>
-              <h1 className="text-lg md:text-xl font-display font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
+              <h1 className="text-lg md:text-xl font-display font-black tracking-tight text-gradient-aurora flex items-center gap-1.5 leading-none">
                 Civora
               </h1>
-              <p className="text-[9px] text-indigo-400 uppercase font-black tracking-widest mt-1">District Civic Node</p>
+              <p className="text-[9px] text-violet-400 uppercase font-black tracking-widest mt-1">AI-Powered Civic Intelligence</p>
             </div>
           </div>
 
           {/* Navigation Controls */}
-          <nav id="top-nav" className="flex items-center gap-1 bg-slate-900/80 p-1.5 rounded-xl border border-white/5 shadow-inner">
+          <nav id="top-nav" className="flex items-center gap-1 bg-white/[0.03] p-1.5 rounded-xl border border-white/5 shadow-inner backdrop-blur-sm">
             <button 
               id="nav-map-btn"
               onClick={() => setActiveTab('map')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${activeTab === 'map' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-extrabold' : 'text-slate-400 hover:text-white'}`}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${activeTab === 'map' ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-lg shadow-violet-500/20 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
             >
               <MapPin size={13} /> <span className="hidden sm:inline">Map Feed</span>
             </button>
             <button 
               id="nav-trends-btn"
               onClick={() => setActiveTab('trends')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${activeTab === 'trends' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-extrabold' : 'text-slate-400 hover:text-white'}`}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${activeTab === 'trends' ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-lg shadow-violet-500/20 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
             >
               <TrendingUp size={13} /> <span className="hidden sm:inline">Civic Trends</span>
             </button>
             <button 
               id="nav-admin-btn"
               onClick={() => setActiveTab('admin')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${activeTab === 'admin' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-extrabold' : 'text-slate-400 hover:text-white'}`}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${activeTab === 'admin' ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-lg shadow-violet-500/20 font-extrabold' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
             >
               <Lock size={13} /> <span className="hidden sm:inline">Dispatch Board</span>
             </button>
@@ -180,7 +199,7 @@ export default function App() {
             <button 
               id="header-report-btn"
               onClick={() => { setActiveTab('report'); setSelectedReportId(null); }}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800 text-white font-display font-black tracking-wide px-4.5 py-2.5 rounded-xl text-xs transition-all shadow-lg hover:shadow-indigo-600/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+              className="btn-aurora rounded-xl px-5 py-2.5 text-xs font-display font-bold tracking-wide flex items-center gap-1.5 cursor-pointer"
             >
               <PlusCircle size={14} /> <span className="hidden md:inline">Report Incident</span><span className="md:hidden">Report</span>
             </button>
@@ -190,7 +209,7 @@ export default function App() {
       </header>
 
       {/* Main layout contents */}
-      <main className="flex-1 flex flex-col relative">
+      <main className="flex-1 flex flex-col relative z-[1]">
         <AnimatePresence mode="wait">
           
           {/* TAB: Interactive map with listings */}
@@ -203,44 +222,60 @@ export default function App() {
               id="map-tab-container"
             >
               {/* Left sidebar listing of real-time entries */}
-              <div id="side-list-pane" className="w-full lg:w-96 bg-slate-950/65 backdrop-blur-xl border-r border-white/5 shrink-0 flex flex-col h-1/2 lg:h-full z-[10] shadow-2xl">
-                <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-slate-900/40">
-                  <div>
-                    <h2 className="text-[10px] uppercase font-black text-indigo-400 tracking-widest">Feed Registry</h2>
-                    <h3 className="text-sm font-black text-white mt-1 flex items-center gap-2">
-                      District Incidents
-                      <span className="px-2.5 py-0.5 bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 rounded-full text-[10px] font-black">{reports.length}</span>
-                    </h3>
+              <div id="side-list-pane" className="w-full lg:w-96 glass-heavy shrink-0 flex flex-col h-1/2 lg:h-full z-[10] shadow-2xl border-r border-white/5">
+                <div className="p-4 shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-[10px] uppercase font-black text-violet-400 tracking-widest">Live Feed</h2>
+                      <h3 className="text-sm font-black text-white mt-1.5 flex items-center gap-2">
+                        District Incidents
+                        <span className="px-2.5 py-0.5 bg-gradient-to-r from-violet-500/15 to-cyan-500/15 border border-violet-500/20 text-violet-300 rounded-full text-[10px] font-black">{reports.length}</span>
+                      </h3>
+                    </div>
+                    
+                    {/* Floating reporter trigger on mobile list header */}
+                    <button 
+                      id="mobile-fom-trigger-btn"
+                      onClick={() => setActiveTab('report')}
+                      className="md:hidden flex items-center gap-1 btn-aurora text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold"
+                    >
+                      <PlusCircle size={12} /> File
+                    </button>
                   </div>
-                  
-                  {/* Floating reporter trigger on mobile list header */}
-                  <button 
-                    id="mobile-fom-trigger-btn"
-                    onClick={() => setActiveTab('report')}
-                    className="md:hidden flex items-center gap-1 bg-indigo-600 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold hover:bg-indigo-700 transition"
-                  >
-                    <PlusCircle size={12} /> File
-                  </button>
+                  {/* Gradient separator line */}
+                  <div className="mt-3 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
                 </div>
 
                 {/* Listing content */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin scrollbar-thumb-white/5">
+                <div className="flex-1 overflow-y-auto p-4 pt-0 space-y-3.5 scrollbar-thin scrollbar-thumb-white/5">
                   {loading ? (
-                    <div className="p-12 text-center text-xs text-slate-400 font-bold space-y-4">
-                      <div className="relative w-8 h-8 mx-auto flex items-center justify-center">
-                        <span className="absolute inline-block w-full h-full border-2 border-indigo-500/10 rounded-full" />
-                        <span className="absolute inline-block w-full h-full border-t-2 border-indigo-500 rounded-full animate-spin" />
+                    <div className="p-12 text-center text-xs text-slate-400 font-bold space-y-5">
+                      {/* Orbital loading animation */}
+                      <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-gradient-to-br from-violet-400 to-cyan-400 shadow-lg shadow-violet-500/40" />
+                        <div className="absolute inset-0 animate-orbit">
+                          <div className="w-2 h-2 rounded-full bg-violet-400 shadow-md shadow-violet-500/50" />
+                        </div>
+                        <div className="absolute inset-0 animate-orbit" style={{ animationDelay: '1s', animationDuration: '2.5s' }}>
+                          <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-md shadow-cyan-500/50" />
+                        </div>
+                        <div className="absolute inset-0 animate-orbit" style={{ animationDelay: '2s', animationDuration: '3.5s' }}>
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-md shadow-emerald-500/50" />
+                        </div>
                       </div>
-                      <p className="tracking-widest text-slate-400 uppercase text-[10px]">Synchronizing coordinates...</p>
+                      <p className="tracking-widest text-slate-500 uppercase text-[10px]">Synchronizing coordinates...</p>
                     </div>
                   ) : reports.length === 0 ? (
-                    <div className="p-8 text-center border border-dashed border-white/10 rounded-2xl bg-white/5 space-y-3 mt-4">
-                      <p className="text-xs font-bold text-white">All coordinates clear!</p>
-                      <p className="text-[10px] text-slate-400 leading-relaxed">Be the first to report a broken streetlight, pothole, or trash pile in your neighborhood.</p>
+                    <div className="p-8 text-center glass-card rounded-2xl space-y-4 mt-4">
+                      <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-violet-500/15 to-cyan-500/15 border border-violet-500/20 flex items-center justify-center">
+                        <FileWarning size={24} className="text-violet-400" />
+                      </div>
+                      <p className="text-sm font-bold text-white">All coordinates clear!</p>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">Be the first to report a broken streetlight, pothole, or trash pile in your neighborhood.</p>
                       <button 
                         id="empty-state-report-btn"
                         onClick={() => setActiveTab('report')}
-                        className="mt-2 text-xs font-black text-indigo-400 hover:text-indigo-300 transition"
+                        className="mt-1 text-xs font-black text-gradient-aurora hover:opacity-80 transition"
                       >
                         File rapid complaint &rarr;
                       </button>
@@ -251,43 +286,51 @@ export default function App() {
                         ? new Date(report.timestamp.seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
                         : 'Just now';
 
-                      const statusColor = 
-                        report.status === 'Resolved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                        report.status === 'Under Review' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
-                        'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                      const statusClass = 
+                        report.status === 'Resolved' ? 'status-resolved' :
+                        report.status === 'Under Review' ? 'status-review' :
+                        'status-reported';
 
-                      const severityLeftBar = 
-                        report.severity === 'High' ? 'border-l-4 border-l-rose-500' :
-                        report.severity === 'Medium' ? 'border-l-4 border-l-amber-500' :
-                        'border-l-4 border-l-emerald-500';
+                      const severityLevel = 
+                        report.severity === 'High' ? 'high' :
+                        report.severity === 'Medium' ? 'medium' :
+                        'low';
 
                       return (
                         <div 
                           id={`drawer-item-${report.id}`}
                           key={report.id}
                           onClick={() => setSelectedReportId(report.id)}
-                          className={`group p-3.5 border rounded-2xl cursor-pointer transition-all duration-200 flex gap-3.5 relative overflow-hidden ${severityLeftBar} ${selectedReportId === report.id ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/5 ring-1 ring-indigo-500' : 'border-white/5 bg-slate-900/30 hover:border-white/15 hover:bg-slate-900/60 shadow-sm'}`}
+                          className={`group glass-card p-3.5 rounded-2xl cursor-pointer transition-all duration-200 flex gap-3.5 relative overflow-hidden hover:shadow-violet-500/5 hover:shadow-lg ${selectedReportId === report.id ? 'ring-1 ring-violet-500/50 bg-violet-500/5 shadow-lg shadow-violet-500/10' : ''}`}
                         >
+                          {/* Severity dot indicator */}
+                          <div className="absolute top-3 left-3">
+                            <div className={`severity-dot severity-dot-${severityLevel}`} />
+                          </div>
+
                           {report.photoUrl ? (
-                            <div className="w-14 h-14 bg-slate-950 flex-shrink-0 overflow-hidden rounded-xl border border-white/5">
+                            <div className="w-14 h-14 bg-slate-950 flex-shrink-0 overflow-hidden rounded-xl border border-white/5 ml-4">
                               <img src={report.photoUrl} className="w-full h-full object-cover group-hover:scale-105 transition duration-305" referrerPolicy="no-referrer" />
                             </div>
                           ) : (
-                            <div className="w-14 h-14 bg-slate-950 rounded-xl shrink-0 flex items-center justify-center border border-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+                            <div className="w-14 h-14 bg-slate-950 rounded-xl shrink-0 flex items-center justify-center border border-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-wider ml-4">
                               No pic
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-1.5">
-                              <h4 className="text-[13px] font-extrabold text-white leading-none truncate group-hover:text-indigo-400 transition">{report.category}</h4>
-                              <span className="text-[9px] text-slate-400 shrink-0 font-extrabold uppercase">{dateStr}</span>
+                              <h4 className="text-[13px] font-extrabold text-white leading-none truncate group-hover:text-violet-400 transition">{report.category}</h4>
+                              <span className="text-[9px] text-slate-500 shrink-0 font-extrabold uppercase flex items-center gap-1">
+                                <Calendar size={9} className="text-slate-600" />
+                                {dateStr}
+                              </span>
                             </div>
                             <p className="text-[11px] text-slate-400 mt-2 line-clamp-2 leading-relaxed italic">
                               "{report.userNotes || 'No citizen notes added.'}"
                             </p>
 
                             <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
-                              <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border rounded-full ${statusColor}`}>{report.status}</span>
+                              <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full ${statusClass}`}>{report.status}</span>
                               <span className="text-[9px] text-slate-400 font-extrabold bg-slate-950/40 border border-white/5 px-2 py-0.5 rounded-full">💼 {report.responsible_department}</span>
                             </div>
                           </div>
@@ -312,7 +355,7 @@ export default function App() {
                 <button 
                   id="map-floating-report-btn"
                   onClick={() => setActiveTab('report')}
-                  className="absolute bottom-5 right-5 z-[500] md:hidden bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-xl active:scale-95 transition"
+                  className="absolute bottom-5 right-5 z-[500] md:hidden btn-aurora text-white rounded-full p-4 shadow-xl active:scale-95 transition"
                   title="File public complaint"
                 >
                   <PlusCircle size={22} />
@@ -328,18 +371,18 @@ export default function App() {
                     exit={{ x: 380, opacity: 0 }}
                     transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                     id="complaint-detail-drawer"
-                    className="absolute right-0 top-0 bottom-0 w-full sm:w-96 bg-[#090d1a]/95 backdrop-blur-2xl border-l border-white/10 z-[1010] shadow-2xl p-6 flex flex-col h-full overflow-y-auto"
+                    className="absolute right-0 top-0 bottom-0 w-full sm:w-96 bg-[#080c18]/95 glass-heavy z-[1010] shadow-2xl p-6 flex flex-col h-full overflow-y-auto"
                   >
                     {/* Header */}
                     <div className="flex items-center justify-between border-b border-white/5 pb-4">
                       <div>
-                        <span className="text-[9px] uppercase tracking-widest text-indigo-400 font-black bg-indigo-950/80 border border-indigo-900/40 px-2 py-0.5 rounded">Public Incident File</span>
-                        <h3 className="text-md font-display font-extrabold text-white leading-tight mt-1.5">Category: {selectedReportDetails.category}</h3>
+                        <span className="text-[9px] uppercase tracking-widest font-black bg-gradient-to-r from-violet-950/80 to-cyan-950/80 border border-violet-500/20 text-violet-300 px-2.5 py-1 rounded-md">Public Incident File</span>
+                        <h3 className="text-md font-display font-extrabold text-white leading-tight mt-2">Category: {selectedReportDetails.category}</h3>
                       </div>
                       <button 
                         id="close-drawer-btn"
                         onClick={() => setSelectedReportId(null)}
-                        className="p-1.5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl border border-white/10 transition-colors cursor-pointer"
+                        className="glass p-2 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl transition-colors cursor-pointer"
                       >
                         <X size={16} />
                       </button>
@@ -349,14 +392,14 @@ export default function App() {
                     {selectedReportDetails.photoUrl && (
                       <div className="mt-4.5 w-full h-44 rounded-2xl overflow-hidden border border-white/10 select-none shadow-sm relative group">
                         <img src={selectedReportDetails.photoUrl} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" referrerPolicy="no-referrer" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#080c18] via-transparent to-transparent pointer-events-none" />
                       </div>
                     )}
 
                     {/* Core stats parameters */}
                     <div className="mt-5 space-y-4 text-xs font-semibold">
-                      <div className="grid grid-cols-2 gap-3 bg-slate-900/40 p-3.5 rounded-2xl border border-white/5">
-                        <div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="glass-card p-3.5 rounded-2xl">
                           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block">Status</span>
                           <span className="text-white flex items-center gap-1.5 mt-1 font-extrabold text-[13px]">
                             {selectedReportDetails.status === 'Resolved' && <CheckCircle2 size={13} className="text-emerald-400" />}
@@ -365,17 +408,20 @@ export default function App() {
                             {selectedReportDetails.status}
                           </span>
                         </div>
-                        <div>
+                        <div className="glass-card p-3.5 rounded-2xl">
                           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block">Severity Level</span>
-                          <span className={`inline-block mt-1 text-[11px] font-extrabold font-display`}>
-                            {selectedReportDetails.severity === 'High' ? '🔴 High Severity' : selectedReportDetails.severity === 'Medium' ? '🟡 Medium Severity' : '🟢 Low Severity'}
+                          <span className="flex items-center gap-2 mt-1.5">
+                            <div className={`severity-dot severity-dot-${selectedReportDetails.severity === 'High' ? 'high' : selectedReportDetails.severity === 'Medium' ? 'medium' : 'low'}`} />
+                            <span className="text-[11px] font-extrabold font-display text-white">
+                              {selectedReportDetails.severity === 'High' ? 'High Severity' : selectedReportDetails.severity === 'Medium' ? 'Medium Severity' : 'Low Severity'}
+                            </span>
                           </span>
                         </div>
                       </div>
 
                       <div>
                         <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Assigned Service Department</span>
-                        <p className="text-white font-bold flex items-center gap-1.5 bg-slate-900/40 border border-white/5 px-3 py-2 rounded-xl">
+                        <p className="text-white font-bold flex items-center gap-1.5 glass-card px-3 py-2.5 rounded-xl">
                           💼 {selectedReportDetails.responsible_department}
                         </p>
                       </div>
@@ -383,7 +429,7 @@ export default function App() {
                       {selectedReportDetails.severityReasoning && (
                         <div>
                           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">AI Severity Assessment Justification</span>
-                          <p className="text-slate-300 text-[11px] leading-relaxed italic pr-2 font-medium bg-slate-950/50 border border-white/5 p-3 rounded-xl">
+                          <p className="text-slate-300 text-[11px] leading-relaxed italic pr-2 font-medium glass p-3 rounded-xl">
                             "{selectedReportDetails.severityReasoning}"
                           </p>
                         </div>
@@ -391,16 +437,19 @@ export default function App() {
 
                       <div className="border-t border-white/5 pt-3.5">
                         <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Citizen Notes</span>
-                        <p className="text-slate-300 leading-relaxed text-[11px] font-medium bg-slate-950/30 border border-white/5 p-3 rounded-xl">
-                          "{selectedReportDetails.userNotes || 'No explicit citizen description recorded.'}"
-                        </p>
+                        <div className="glass gradient-border rounded-xl p-3">
+                          <p className="text-slate-300 leading-relaxed text-[11px] font-medium">
+                            "{selectedReportDetails.userNotes || 'No explicit citizen description recorded.'}"
+                          </p>
+                        </div>
                       </div>
 
                       <div className="border-t border-white/5 pt-3.5">
-                        <span className="text-[9px] uppercase font-extrabold tracking-wider text-indigo-400 flex items-center gap-1 mb-1.5">
-                          <Sparkles size={11} className="text-indigo-400 animate-pulse" /> AI Generated Grievance Letter
+                        <span className="text-[9px] uppercase font-extrabold tracking-wider flex items-center gap-1 mb-1.5">
+                          <Sparkles size={11} className="text-violet-400 animate-pulse" />
+                          <span className="text-gradient-cool">AI Generated Grievance Letter</span>
                         </span>
-                        <div className="bg-slate-950 border border-white/5 p-4 rounded-2xl text-[11px] text-slate-200 font-mono leading-relaxed select-text shadow-inner max-h-[160px] overflow-y-auto">
+                        <div className="glass gradient-border rounded-2xl p-4 text-[11px] text-slate-200 font-mono leading-relaxed select-text shadow-inner max-h-[160px] overflow-y-auto">
                           {selectedReportDetails.formal_complaint_text}
                         </div>
                       </div>
@@ -410,7 +459,7 @@ export default function App() {
                     <div id="vote-box" className="mt-auto pt-4 border-t border-white/5 space-y-3 shrink-0">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-xs text-slate-300 font-extrabold">
-                          <Users size={14} className="text-indigo-400" />
+                          <Users size={14} className="text-violet-400" />
                           <span>{selectedReportDetails.confirmations || 1} Citizen backing signatures</span>
                         </div>
                       </div>
@@ -418,7 +467,7 @@ export default function App() {
                       <button 
                         id="support-drawer-item-btn"
                         onClick={() => handleSupportReport(selectedReportDetails)}
-                        className="w-full text-center py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold font-display rounded-xl shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="btn-aurora rounded-xl w-full py-3.5 text-sm font-display font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         👍 Back & Endorse This Issue
                       </button>
@@ -475,11 +524,15 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Humble Footer branding */}
-      <footer id="app-footer" className="bg-[#030712]/90 backdrop-blur-md border-t border-white/5 py-4 text-center text-[9px] text-slate-500 font-extrabold shrink-0 tracking-widest">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-slate-400">
-          <span>🛡️ CIVORA COOPERATIVE &copy; {new Date().getFullYear()}</span>
-          <span>EMPOWERING COMMUNITIES VIA MUNICIPAL INTELLIGENCE</span>
+      {/* Premium Footer */}
+      <footer id="app-footer" className="glass shrink-0 relative z-[1]">
+        {/* Gradient top border */}
+        <div className="h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
+        <div className="py-4 text-center text-[9px] font-extrabold tracking-widest">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-slate-400">
+            <span>🛡️ <span className="text-gradient-aurora">CIVORA</span> COOPERATIVE &copy; {new Date().getFullYear()}</span>
+            <span>EMPOWERING COMMUNITIES VIA MUNICIPAL INTELLIGENCE</span>
+          </div>
         </div>
       </footer>
 

@@ -26,17 +26,18 @@ export default function MapContainer({
   const markerInstanceRef = useRef<L.Marker | null>(null); // For single draggable select pin
   const reportsGroupRef = useRef<L.FeatureGroup | null>(null);
 
-  // SVGs for modern color-coded markers
+  // SVGs for modern color-coded markers — enhanced with double pulse + gradient body
   const createMarkerHtml = (color: string, label: string) => `
     <div class="relative flex items-center justify-center">
-      <!-- Glow effect -->
-      <div class="absolute w-8 h-8 rounded-full bg-${color}-500/25 animate-ping" style="animation-duration: 2s;"></div>
-      <!-- Marker body -->
-      <div class="relative w-7 h-7 rounded-full bg-slate-950 shadow-lg flex items-center justify-center border border-${color}-500 text-${color}-400 font-extrabold text-[11px] glowing-pin-${color}">
+      <!-- Double pulse rings: fast + slow -->
+      <div class="absolute w-10 h-10 rounded-full bg-${color}-500/20 animate-ping" style="animation-duration: 1.5s;"></div>
+      <div class="absolute w-12 h-12 rounded-full bg-${color}-500/10 animate-ping" style="animation-duration: 3s;"></div>
+      <!-- Marker body with gradient -->
+      <div class="relative w-8 h-8 rounded-full shadow-lg flex items-center justify-center border border-${color}-500 text-${color}-400 font-extrabold text-[11px] glowing-pin-${color}" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
         ${label}
       </div>
-      <!-- Tail -->
-      <div class="absolute -bottom-1 w-2.5 h-2.5 rotate-45 bg-slate-950 border-r border-b border-${color}-500"></div>
+      <!-- Tail with matching gradient -->
+      <div class="absolute -bottom-1 w-2.5 h-2.5 rotate-45 border-r border-b border-${color}-500" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);"></div>
     </div>
   `;
 
@@ -55,27 +56,34 @@ export default function MapContainer({
     return L.divIcon({
       className: 'custom-leaflet-pin',
       html: createMarkerHtml(color, label),
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
+      iconSize: [34, 34],
+      iconAnchor: [17, 34],
+      popupAnchor: [0, -34]
     });
   };
 
-  // Selector icon (draggable location picker)
+  // Selector icon (draggable location picker) — enhanced with violet/cyan gradient ring + double pulse
   const getSelectorIcon = () => {
     return L.divIcon({
       className: 'custom-leaflet-pin-select',
       html: `
         <div class="relative flex items-center justify-center">
-          <div class="absolute w-9 h-9 rounded-full bg-indigo-500/20 animate-pulse"></div>
-          <div class="relative w-8 h-8 rounded-full bg-slate-950 shadow-lg flex items-center justify-center border border-indigo-500 text-indigo-400 glowing-pin-indigo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <!-- Double pulse rings -->
+          <div class="absolute w-11 h-11 rounded-full animate-pulse" style="background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, rgba(6,182,212,0.1) 100%);"></div>
+          <div class="absolute w-14 h-14 rounded-full animate-ping" style="animation-duration: 2.5s; background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, rgba(6,182,212,0.05) 100%);"></div>
+          <!-- Pin body with violet-cyan gradient ring -->
+          <div class="relative w-9 h-9 rounded-full shadow-lg flex items-center justify-center glowing-pin-indigo" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); border: 2px solid transparent; background-clip: padding-box; box-shadow: 0 0 0 2px rgba(139,92,246,0.6), 0 0 15px rgba(139,92,246,0.3), 0 0 30px rgba(6,182,212,0.15);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="url(#selectorGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <defs><linearGradient id="selectorGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
           </div>
-          <div class="absolute -bottom-1 w-2 h-2 rotate-45 bg-slate-950 border-r border-b border-indigo-500"></div>
+          <!-- Tail -->
+          <div class="absolute -bottom-1.5 w-2.5 h-2.5 rotate-45" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); border-right: 2px solid rgba(139,92,246,0.6); border-bottom: 2px solid rgba(139,92,246,0.6);"></div>
         </div>
       `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 32]
+      iconSize: [36, 36],
+      iconAnchor: [18, 36]
     });
   };
 
@@ -214,11 +222,16 @@ export default function MapContainer({
         icon: getSeverityIcon(report.severity)
       });
 
-      // Prepare custom popup card content
+      // Prepare custom popup card content with premium styling
       const statusBadgeColors = 
         report.status === 'Resolved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
         report.status === 'Under Review' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' :
         'bg-rose-500/10 text-rose-400 border-rose-500/30';
+
+      const severityDotColor = 
+        report.severity === 'High' ? '#f43f5e' :
+        report.severity === 'Medium' ? '#f59e0b' :
+        '#10b981';
 
       const severityBadgeColors = 
         report.severity === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
@@ -230,24 +243,27 @@ export default function MapContainer({
       popupHtml.innerHTML = `
         <div class="flex items-start gap-2.5 mb-2.5">
           ${report.photoUrl ? `
-            <div class="w-12 h-12 rounded-lg overflow-hidden bg-slate-900 flex-shrink-0 border border-slate-800">
+            <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 flex-shrink-0 border border-white/10">
               <img src="${report.photoUrl}" referrerPolicy="no-referrer" class="w-full h-full object-cover">
             </div>
           ` : `
-            <div class="w-12 h-12 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center flex-shrink-0">
+            <div class="w-12 h-12 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center flex-shrink-0">
               <span class="text-slate-500 text-[10px] font-bold">NO IMG</span>
             </div>
           `}
           <div class="min-w-0 flex-1">
-            <h4 class="font-black text-slate-100 border-b border-slate-800 pb-1 text-sm truncate tracking-tight">${report.category}</h4>
-            <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+            <h4 class="font-bold text-sm tracking-tight text-slate-100 pb-1.5 mb-1.5" style="border-bottom: 2px solid transparent; border-image: linear-gradient(90deg, #8b5cf6, #06b6d4) 1;">${report.category}</h4>
+            <div class="flex items-center gap-1.5 flex-wrap">
               <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full border ${statusBadgeColors}">${report.status}</span>
-              <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full border ${severityBadgeColors}">${report.severity}</span>
+              <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full border ${severityBadgeColors} flex items-center gap-1">
+                <span style="width:5px;height:5px;border-radius:50%;background:${severityDotColor};display:inline-block;"></span>
+                ${report.severity}
+              </span>
             </div>
           </div>
         </div>
         <p class="text-[11px] text-slate-400 mb-3 line-clamp-2 leading-relaxed italic">"${report.userNotes || 'No notes description provided.'}"</p>
-        <button id="detail-btn-${report.id}" class="w-full text-center py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer">
+        <button id="detail-btn-${report.id}" class="w-full text-center py-2.5 text-white rounded-xl text-xs font-bold shadow-lg transition-all cursor-pointer hover:opacity-90 active:scale-95" style="background: linear-gradient(135deg, #8b5cf6, #06b6d4); border-radius: 0.75rem; font-weight: 700; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25);">
           View Audit Details &rarr;
         </button>
       `;
@@ -289,11 +305,16 @@ export default function MapContainer({
       <div 
         ref={mapElementRef} 
         id={`map-${mode}`}
-        className="w-full h-full border border-white/10 rounded-2xl shadow-2xl bg-slate-955 relative"
+        className="w-full h-full border border-white/5 rounded-2xl shadow-2xl bg-slate-955 relative"
+      />
+      {/* Vignette overlay on map edges */}
+      <div 
+        className="absolute inset-0 rounded-2xl pointer-events-none z-[2]"
+        style={{ background: 'radial-gradient(ellipse at center, transparent 50%, rgba(6,8,15,0.4) 100%)' }}
       />
       {mode === 'select' && (
-        <div id="drag-tip" className="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur-md text-white text-[10px] uppercase tracking-wider font-extrabold px-3 py-1.5 border border-white/10 rounded-xl shadow-2xl pointer-events-none z-10">
-          💡 Drag pin or tap map to update location
+        <div id="drag-tip" className="absolute bottom-4 left-4 backdrop-blur-xl text-white text-[10px] uppercase tracking-wider font-extrabold px-3.5 py-2 rounded-xl shadow-2xl pointer-events-none z-10" style={{ background: 'rgba(8,12,24,0.9)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'rgba(139,92,246,0.15)' }}>
+          📍 Drag pin or tap map to update location
         </div>
       )}
     </div>

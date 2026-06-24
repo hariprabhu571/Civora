@@ -492,20 +492,67 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
     }
   };
 
+  // Progress steps data
+  const progressSteps = [
+    { label: 'Evidence', active: stage === 'collect', completed: stage === 'analyzing' || stage === 'review' || stage === 'submitting' },
+    { label: 'AI Analysis', active: stage === 'analyzing', completed: stage === 'review' || stage === 'submitting' },
+    { label: 'Review & Submit', active: stage === 'review' || stage === 'submitting', completed: false },
+  ];
+
   return (
     <div className="min-h-full py-4 px-4 md:px-8 font-sans">
-      <div id="form-container" className="max-w-4xl mx-auto bg-slate-900/40 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/10 flex flex-col min-h-[500px]">
-        {/* Dynamic header progress bars */}
-        <div id="form-header" className="bg-gradient-to-r from-[#030712] via-slate-950 to-[#030712] py-6 px-6 md:px-8 text-white flex items-center justify-between border-b border-white/5 relative">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
+      <div id="form-container" className="max-w-4xl mx-auto glass-heavy rounded-3xl shadow-2xl overflow-hidden border border-white/10 flex flex-col min-h-[500px] gradient-border">
+        
+        {/* Multi-step progress indicator */}
+        <div className="px-6 md:px-8 pt-6 pb-2 animate-fade-in-up">
+          <div className="flex items-center justify-between relative">
+            {progressSteps.map((step, idx) => (
+              <React.Fragment key={step.label}>
+                {/* Step dot + label */}
+                <div className="flex flex-col items-center z-10 relative">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500 ${
+                      step.active || step.completed
+                        ? 'bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25'
+                        : 'bg-white/10 text-slate-500'
+                    }`}
+                  >
+                    {step.completed ? <Check size={14} /> : idx + 1}
+                  </div>
+                  <span className={`text-[10px] font-semibold mt-1.5 tracking-wide ${
+                    step.active || step.completed ? 'text-violet-300' : 'text-slate-500'
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+                {/* Connecting line */}
+                {idx < progressSteps.length - 1 && (
+                  <div className="flex-1 h-[2px] mx-2 -mt-4 relative">
+                    <div className="absolute inset-0 bg-white/10 rounded-full" />
+                    <div
+                      className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
+                        step.completed
+                          ? 'w-full bg-gradient-to-r from-violet-500 to-cyan-500'
+                          : 'w-0'
+                      }`}
+                    />
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+
+        {/* Dynamic header */}
+        <div id="form-header" className="py-5 px-6 md:px-8 text-white flex items-center justify-between relative">
           <div className="relative">
-            <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-extrabold bg-indigo-950/80 border border-indigo-900/40 px-3 py-1 rounded-full">Civora Citizen Dispatch</span>
-            <h2 className="text-xl md:text-2xl font-display font-black tracking-tight mt-2.5">Report Civic Issue</h2>
+            <span className="text-[10px] uppercase tracking-widest font-extrabold bg-gradient-to-r from-violet-950/80 to-cyan-950/80 border border-violet-500/20 text-violet-300 px-3 py-1 rounded-full">Civora Citizen Dispatch</span>
+            <h2 className="text-xl md:text-2xl font-display font-bold tracking-tight mt-2.5 text-gradient-aurora">Report Civic Issue</h2>
           </div>
           <button 
             id="close-report-btn"
             onClick={onBackToMap}
-            className="text-xs font-bold uppercase tracking-wider bg-white/5 hover:bg-white/10 px-4 py-2 border border-white/10 rounded-xl transition duration-150 cursor-pointer"
+            className="text-xs font-bold uppercase tracking-wider glass hover:border-violet-500/30 px-4 py-2 border border-white/10 rounded-xl transition duration-150 cursor-pointer text-slate-300"
           >
             Cancel
           </button>
@@ -513,10 +560,10 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
 
         {/* Dynamic Non-blocking alert notice banner */}
         {formNotice && (
-          <div className={`px-6 py-3.5 text-xs font-semibold flex items-center justify-between transition-all ${
-            formNotice.type === 'error' ? 'bg-rose-500/10 text-rose-400 border-b border-rose-500/20' :
-            formNotice.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-b border-emerald-500/20' :
-            'bg-sky-500/10 text-sky-400 border-b border-sky-500/20'
+          <div className={`mx-6 mb-2 px-4 py-3.5 text-xs font-semibold flex items-center justify-between transition-all rounded-xl glass ${
+            formNotice.type === 'error' ? 'border-l-2 border-l-rose-400 text-rose-400' :
+            formNotice.type === 'success' ? 'border-l-2 border-l-emerald-400 text-emerald-400' :
+            'border-l-2 border-l-cyan-400 text-cyan-400'
           }`}>
             <span className="flex items-center gap-2">
               <span className="text-[15px]">{formNotice.type === 'error' ? '⚠️' : formNotice.type === 'success' ? '✅' : 'ℹ️'}</span>
@@ -547,7 +594,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                     onClick={() => document.getElementById('camera-file-input')?.click()}
-                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center min-h-[220px] ${mediaPreview ? 'border-indigo-500 bg-indigo-500/5' : 'border-white/10 hover:border-indigo-500/60 hover:bg-white/5'}`}
+                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center min-h-[220px] ${mediaPreview ? 'border-violet-500/50 bg-violet-500/5' : 'border-white/10 hover:border-violet-500/50 hover:bg-white/5'}`}
                   >
                     <input 
                       id="camera-file-input"
@@ -558,7 +605,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                     />
 
                     {mediaPreview ? (
-                      <div className="relative w-full max-h-[200px] overflow-hidden rounded-lg flex items-center justify-center bg-black">
+                      <div className="relative w-full max-h-[200px] overflow-hidden rounded-lg flex items-center justify-center bg-black group">
                         {isVideo ? (
                           <>
                             <video 
@@ -568,7 +615,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                               onLoadedMetadata={handleVideoLoadedMetadata}
                               className="max-h-[190px] rounded"
                             />
-                            <div className="absolute top-2 right-2 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">
+                            <div className="absolute top-2 right-2 bg-gradient-to-r from-violet-600 to-cyan-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">
                               Video
                             </div>
                           </>
@@ -580,6 +627,8 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                             className="max-h-[190px] object-contain rounded"
                           />
                         )}
+                        {/* Glass overlay on hover */}
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center" />
                         <button 
                           id="clear-media-btn"
                           type="button"
@@ -590,7 +639,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                             setIsVideo(false);
                             setImageBase64('');
                           }}
-                          className="absolute bottom-2 right-2 bg-rose-600 hover:bg-rose-700 text-white p-2 rounded-full shadow-lg transition cursor-pointer"
+                          className="absolute bottom-2 right-2 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white p-2 rounded-full shadow-lg transition cursor-pointer z-10"
                           title="Remove media"
                         >
                           <Trash2 size={16} />
@@ -598,7 +647,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <div className="w-12 h-12 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-400 mx-auto">
+                        <div className="w-12 h-12 bg-gradient-to-br from-violet-500/15 to-cyan-500/15 rounded-full flex items-center justify-center text-violet-400 mx-auto">
                           <Camera size={24} />
                         </div>
                         <p className="text-sm font-semibold text-white">Drag or Click to Upload photo/video</p>
@@ -614,7 +663,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                 <div className="flex flex-col">
                   <label id="notes-lbl" className="block text-sm font-semibold text-slate-300 mb-3">Casual Description / Notes</label>
                   
-                  <div className="relative flex-1 min-h-[150px] flex flex-col border border-white/10 rounded-xl overflow-hidden bg-slate-950/40 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition">
+                  <div className="relative flex-1 min-h-[150px] flex flex-col glass-card rounded-xl overflow-hidden focus-within:border-violet-500/40 focus-within:ring-2 focus-within:ring-violet-500/20 transition">
                     <textarea 
                       id="notes-textarea"
                       value={userNotes}
@@ -623,7 +672,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                       className="w-full flex-1 p-4 bg-transparent outline-none resize-none text-[14px] text-white placeholder:text-slate-500"
                     />
                     
-                    <div id="input-controls" className="p-2 border-t border-white/5 flex items-center justify-between bg-slate-950/30">
+                    <div id="input-controls" className="p-2 border-t border-white/5 flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs text-slate-400 pl-2">
                         {isRecording ? (
                           <span className="flex items-center gap-1.5 font-bold text-rose-500">
@@ -639,7 +688,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                         id="voice-mic-btn"
                         type="button"
                         onClick={triggerVoiceInput}
-                        className={`p-2.5 rounded-full transition flex items-center justify-center shadow-sm cursor-pointer ${isRecording ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse' : 'bg-white/5 hover:bg-white/10 text-slate-300'}`}
+                        className={`p-2.5 rounded-full transition flex items-center justify-center shadow-sm cursor-pointer ${isRecording ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white ring-2 ring-rose-400/50 animate-pulse' : 'glass text-slate-300 hover:text-white'}`}
                       >
                         <Mic size={18} className={isRecording ? 'animate-bounce' : ''} />
                       </button>
@@ -657,18 +706,22 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                     id="gps-locate-btn"
                     onClick={attemptGeolocation}
                     type="button"
-                    className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-bold transition cursor-pointer"
+                    className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 font-bold transition cursor-pointer"
                   >
                     <MapPin size={14} /> {locating ? 'GPS Loading...' : 'Reset Geolocation'}
                   </button>
                 </div>
 
-                <div id="picker-map-box" className="h-44 rounded-xl overflow-hidden border border-white/10 shadow-2xl relative">
-                  <MapContainer 
-                    mode="select"
-                    center={[coordinates.lat, coordinates.lng]}
-                    onLocationChange={(lat, lng) => setCoordinates({ lat, lng })}
-                  />
+                <div className="glass-card rounded-xl overflow-hidden p-0">
+                  <div id="picker-map-box" className="h-44 rounded-xl overflow-hidden relative">
+                    <MapContainer 
+                      mode="select"
+                      center={[coordinates.lat, coordinates.lng]}
+                      onLocationChange={(lat, lng) => setCoordinates({ lat, lng })}
+                    />
+                    {/* Subtle gradient overlay at bottom of map */}
+                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#06080f]/60 to-transparent pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
@@ -678,7 +731,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                   id="submit-ai-classify-btn"
                   onClick={analyzeIssueWithAI}
                   disabled={!mediaPreview}
-                  className={`flex items-center gap-2 font-display font-semibold text-white px-8 py-3 rounded-xl transition cursor-pointer ${!mediaPreview ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5' : 'bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg'}`}
+                  className={`flex items-center gap-2 rounded-xl px-8 py-3.5 font-display font-bold text-sm tracking-wide transition cursor-pointer ${!mediaPreview ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5' : 'btn-aurora text-white shadow-md hover:shadow-lg'}`}
                 >
                   <Sparkles size={18} />
                   Analyze Issue with Gemini AI
@@ -692,17 +745,32 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex-1 flex flex-col items-center justify-center text-center p-10 space-y-5"
+              className="flex-1 flex flex-col items-center justify-center text-center p-10 space-y-6"
             >
-              <div className="relative">
-                <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 animate-pulse blur" />
-                <div className="relative w-20 h-20 bg-slate-950 rounded-full flex items-center justify-center text-indigo-400 shadow-xl border border-white/10">
-                  <Loader2 size={36} className="animate-spin text-indigo-400" />
+              {/* Orbital loader with pulsing aurora glow */}
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                {/* Aurora glow behind */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-500/30 via-cyan-500/20 to-rose-500/30 blur-2xl animate-breathe" />
+                {/* Center circle */}
+                <div className="relative w-16 h-16 bg-[#06080f] rounded-full flex items-center justify-center border border-white/10 shadow-2xl z-10">
+                  <Sparkles size={24} className="text-violet-400 animate-pulse" />
+                </div>
+                {/* Orbiting dot 1 - violet */}
+                <div className="absolute inset-0 animate-spin" style={{ animationDuration: '2s' }}>
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-violet-500 shadow-lg shadow-violet-500/50" />
+                </div>
+                {/* Orbiting dot 2 - cyan */}
+                <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3s', animationDirection: 'reverse' }}>
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-lg shadow-cyan-500/50" />
+                </div>
+                {/* Orbiting dot 3 - rose */}
+                <div className="absolute inset-0 animate-spin" style={{ animationDuration: '4s' }}>
+                  <div className="absolute top-1/2 right-0 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50" />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <h3 className="text-xl font-semibold text-white">Calling Core Dispatch Intelligence...</h3>
-                <p className="text-slate-400 text-sm max-w-sm">Gemini AI is examining your image, analyzing severity and auto-drafting an official public grievance petition.</p>
+              <div className="space-y-2 animate-fade-in-up">
+                <h3 className="text-xl font-display font-bold text-white">Calling Core Dispatch Intelligence...</h3>
+                <p className="text-slate-400 text-sm max-w-md">Gemini AI is examining your image, analyzing severity and auto-drafting an official public grievance petition.</p>
               </div>
             </motion.div>
           )}
@@ -714,24 +782,25 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6 flex-1 text-slate-200"
             >
-              <div className="p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl flex items-start gap-3">
-                <Sparkles size={20} className="text-indigo-400 flex-shrink-0 mt-0.5" />
+              {/* Success banner */}
+              <div className="p-4 bg-gradient-to-r from-violet-500/5 to-cyan-500/5 border border-violet-500/15 rounded-xl flex items-start gap-3">
+                <Sparkles size={20} className="text-violet-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-indigo-300 text-sm">Gemini Audit Completed!</h4>
-                  <p className="text-xs text-indigo-400/80 font-medium animate-pulse">Please review, make any necessary adjustments to the fields, and finalize your public report.</p>
+                  <h4 className="font-bold text-violet-300 text-sm">Gemini Audit Completed!</h4>
+                  <p className="text-xs text-violet-400/80 font-medium animate-pulse">Please review, make any necessary adjustments to the fields, and finalize your public report.</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left controls */}
                 <div className="space-y-4">
-                  <div>
+                  <div className="glass-card rounded-xl p-4">
                     <label id="review-cat" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Issue Type Category</label>
                     <select 
                       id="draft-category"
                       value={aiDraft.category}
                       onChange={(e) => handleReviewChange('category', e.target.value as CivicCategory)}
-                      className="w-full border border-white/10 rounded-lg px-3 py-2.5 text-sm bg-slate-950/80 text-white outline-indigo-500 font-medium focus:ring-1 focus:ring-indigo-500/30"
+                      className="w-full glass border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white outline-none font-medium focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/40"
                     >
                       <option value="Pothole">Pothole</option>
                       <option value="Streetlight">Streetlight</option>
@@ -742,7 +811,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                     </select>
                   </div>
 
-                  <div>
+                  <div className="glass-card rounded-xl p-4">
                     <label id="review-severity" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Severity Level</label>
                     <div className="grid grid-cols-3 gap-2">
                       {(['Low', 'Medium', 'High'] as SeverityLevel[]).map((lev) => (
@@ -751,7 +820,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                           key={lev}
                           type="button"
                           onClick={() => handleReviewChange('severity', lev)}
-                          className={`py-2 px-3 border rounded-lg text-xs font-bold text-center transition cursor-pointer ${aiDraft.severity === lev ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-slate-950/80 border-white/5 hover:bg-white/5 text-slate-300'}`}
+                          className={`py-2 px-3 border rounded-lg text-xs font-bold text-center transition cursor-pointer ${aiDraft.severity === lev ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-md border-transparent' : 'glass border-white/5 hover:bg-white/5 text-slate-300'}`}
                         >
                           {lev}
                         </button>
@@ -759,23 +828,23 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                     </div>
                   </div>
 
-                  <div>
+                  <div className="glass-card rounded-xl p-4">
                     <label id="review-reasoning" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">AI Severity Reasoning</label>
                     <textarea 
                       id="draft-severity-reasoning"
                       value={aiDraft.severity_reasoning}
                       onChange={(e) => handleReviewChange('severity_reasoning', e.target.value)}
-                      className="w-full border border-white/10 rounded-lg px-3.5 py-2 text-xs bg-slate-950/60 text-slate-300 outline-indigo-500 resize-none h-14"
+                      className="w-full glass border border-white/10 rounded-lg px-3.5 py-2 text-xs text-slate-300 outline-none resize-none h-14 focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/40"
                     />
                   </div>
 
-                  <div>
+                  <div className="glass-card rounded-xl p-4">
                     <label id="review-dept" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Assigned Service Board (Department)</label>
                     <select 
                       id="draft-dept"
                       value={aiDraft.responsible_department}
                       onChange={(e) => handleReviewChange('responsible_department', e.target.value)}
-                      className="w-full border border-white/10 rounded-lg px-3 py-2.5 text-sm bg-slate-950/80 text-white outline-indigo-500 focus:ring-1 focus:ring-indigo-500/30 font-semibold"
+                      className="w-full glass border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/40 font-semibold"
                     >
                       <option value="Municipal Corporation">Municipal Corporation</option>
                       <option value="Electricity Board">Electricity Board</option>
@@ -786,26 +855,26 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                 </div>
 
                 {/* Right control - petition box */}
-                <div className="flex flex-col">
+                <div className="flex flex-col glass-card rounded-xl p-4">
                   <label id="review-text" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Formal Grievance Petition Text</label>
                   <textarea 
                     id="draft-formal-complaint"
                     value={aiDraft.formal_complaint_text}
                     onChange={(e) => handleReviewChange('formal_complaint_text', e.target.value)}
-                    className="w-full flex-1 border border-white/10 rounded-lg p-4 font-mono text-xs leading-relaxed text-slate-200 outline-indigo-500 bg-slate-950/60 min-h-[180px] focus:ring-1 focus:ring-indigo-500/30 shadow-inner"
+                    className="w-full flex-1 glass border border-white/10 rounded-lg p-4 font-mono text-xs leading-relaxed text-slate-200 outline-none min-h-[180px] focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/40 shadow-inner"
                   />
                 </div>
               </div>
 
               {/* Duplicate modal overlay */}
               {detectedDuplicate && (
-                <div id="duplicate-warning-modal" className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+                <div id="duplicate-warning-modal" className="fixed inset-0 bg-[#06080f]/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
                   <motion.div 
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="bg-slate-900 max-w-lg w-full rounded-2xl overflow-hidden shadow-2xl border border-amber-500/30"
+                    className="glass-heavy max-w-lg w-full rounded-2xl overflow-hidden shadow-2xl border border-amber-500/20"
                   >
-                    <div id="warning-head" className="bg-gradient-to-r from-amber-500/10 to-amber-600/10 border-b border-white/5 p-5 flex items-center gap-3 text-amber-400">
+                    <div id="warning-head" className="bg-gradient-to-r from-amber-500/10 to-rose-500/10 border-b border-white/5 p-5 flex items-center gap-3 text-amber-400">
                       <AlertTriangle size={24} className="animate-bounce" />
                       <div>
                         <h3 className="font-display font-semibold text-lg">Similar Active Issue Found</h3>
@@ -818,7 +887,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                         <strong>AI Auditor analysis:</strong> {duplicateReasoning}
                       </p>
 
-                      <div className="border border-white/10 rounded-xl p-4 bg-slate-950/40">
+                      <div className="border border-white/10 rounded-xl p-4 glass">
                         <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Existing Active Report #{detectedDuplicate.id.slice(0, 5)}</span>
                         <h4 className="font-bold text-white text-[14px] mt-0.5">{detectedDuplicate.category} ({detectedDuplicate.status})</h4>
                         <p className="text-xs text-slate-400 mt-1 line-clamp-3 italic leading-relaxed">
@@ -829,7 +898,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                             <img src={detectedDuplicate.photoUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           </div>
                         )}
-                        <div className="mt-3 flex items-center gap-2 text-xs font-bold text-indigo-400">
+                        <div className="mt-3 flex items-center gap-2 text-xs font-bold text-violet-400">
                           <span>🎯 {detectedDuplicate.confirmations || 1} Citizens support this ticket</span>
                         </div>
                       </div>
@@ -838,7 +907,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                         <button 
                           id="agree-confirm-duplicate-btn"
                           onClick={confirmDuplicateReport}
-                          className="flex-1 text-center py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+                          className="flex-1 text-center py-2.5 px-4 btn-aurora text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <Check size={14} /> Yes, Confirm & Support Ticket
                         </button>
@@ -848,7 +917,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                             setDetectedDuplicate(null);
                             executeReportSaving();
                           }}
-                          className="flex-1 text-center py-2.5 px-4 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold rounded-lg transition cursor-pointer"
+                          className="flex-1 text-center py-2.5 px-4 glass hover:bg-white/10 text-white text-xs font-semibold rounded-lg transition cursor-pointer"
                         >
                           It's different, submit anyway
                         </button>
@@ -858,7 +927,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                             setDetectedDuplicate(null);
                             setStage('review');
                           }}
-                          className="py-2.5 px-4 border border-white/10 text-slate-300 text-xs font-semibold rounded-lg transition cursor-pointer hover:bg-white/5"
+                          className="py-2.5 px-4 glass border border-white/10 text-slate-300 text-xs font-semibold rounded-lg transition cursor-pointer hover:bg-white/5"
                         >
                           Keep Editing
                         </button>
@@ -873,7 +942,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                 <button 
                   id="review-back-btn"
                   onClick={() => setStage('collect')}
-                  className="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-semibold rounded-xl transition cursor-pointer"
+                  className="px-6 py-2.5 glass hover:bg-white/10 text-white text-sm font-semibold rounded-xl transition cursor-pointer"
                 >
                   Back to Form
                 </button>
@@ -881,7 +950,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                 <button 
                   id="review-submit-final-btn"
                   onClick={handleProceedSubmit}
-                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-display font-semibold px-8 py-2.5 rounded-xl transition shadow-md hover:shadow-lg cursor-pointer"
+                  className="flex items-center gap-2 btn-aurora text-white font-display font-bold px-8 py-3 rounded-xl transition shadow-md hover:shadow-lg cursor-pointer text-sm tracking-wide"
                 >
                   <FileText size={18} />
                   Submit Official Complaint
@@ -895,12 +964,30 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex-1 flex flex-col items-center justify-center text-center p-10 space-y-4"
+              className="flex-1 flex flex-col items-center justify-center text-center p-10 space-y-6"
             >
-              <Loader2 size={36} className="animate-spin text-indigo-400" />
-              <div className="space-y-1">
-                <h3 className="text-lg font-semibold text-white">Uploading Civic Ticket...</h3>
-                <p className="text-slate-400 text-xs">Saving report details, image assets to Cloud and registering dispatch board.</p>
+              {/* Enhanced orbital loader */}
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                {/* Pulsing glow */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-500/25 to-cyan-500/25 blur-2xl animate-breathe" />
+                {/* Center */}
+                <div className="relative w-14 h-14 bg-[#06080f] rounded-full flex items-center justify-center border border-white/10 z-10">
+                  <Loader2 size={28} className="animate-spin text-violet-400" />
+                </div>
+                {/* Orbiting dots */}
+                <div className="absolute inset-0 animate-spin" style={{ animationDuration: '2s' }}>
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-violet-500 shadow-lg shadow-violet-500/50" />
+                </div>
+                <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3s', animationDirection: 'reverse' }}>
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-cyan-500 shadow-lg shadow-cyan-500/50" />
+                </div>
+                <div className="absolute inset-0 animate-spin" style={{ animationDuration: '4.5s' }}>
+                  <div className="absolute top-1/2 left-0 -translate-y-1/2 w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50" />
+                </div>
+              </div>
+              <div className="space-y-1.5 animate-fade-in-up">
+                <h3 className="text-lg font-display font-bold text-white">Uploading Civic Ticket...</h3>
+                <p className="text-slate-400 text-xs max-w-md">Saving report details, image assets to Cloud and registering dispatch board.</p>
               </div>
             </motion.div>
           )}
