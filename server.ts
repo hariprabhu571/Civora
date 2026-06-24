@@ -42,6 +42,41 @@ const getGeminiClient = () => {
   return new GoogleGenAI({ apiKey });
 };
 
+// Robust helper to perform Gemini generation with automatic failover across different models
+const generateContentWithFallback = async (
+  ai: any,
+  params: {
+    contents: any;
+    config?: any;
+    preferredModel?: string;
+  }
+): Promise<any> => {
+  const models = [
+    params.preferredModel || 'gemini-3.5-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-2.5-flash',
+  ];
+
+  let lastError: any = null;
+  for (const model of models) {
+    try {
+      console.log(`[Civora Gemini] Attempting content generation using model: "${model}"`);
+      const response = await ai.models.generateContent({
+        model,
+        contents: params.contents,
+        config: params.config,
+      });
+      console.log(`[Civora Gemini] Successfully completed generation using model: "${model}"`);
+      return response;
+    } catch (err: any) {
+      lastError = err;
+      const errMsg = err?.message || String(err);
+      console.warn(`[Civora Gemini] Model "${model}" failed. Reason: ${errMsg.substring(0, 150)}...`);
+    }
+  }
+  throw lastError || new Error('All Gemini fallback models failed.');
+};
+
 // Robust helper to parse and clean potential model responses (e.g. stripping markdown tags if any)
 const safeJsonParse = (text: string): any => {
   if (!text) {
@@ -98,9 +133,9 @@ app.post('/api/analyze-issue', async (req, res) => {
       Ensure the output is valid JSON and contains only the specified fields with no extra formatting.
     `;
 
-    // Modern SDK structured generation call
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+    // Modern SDK structured generation call with failover
+    const response = await generateContentWithFallback(ai, {
+      preferredModel: 'gemini-3.5-flash',
       contents: [
         {
           inlineData: {
@@ -220,8 +255,8 @@ app.post('/api/check-duplicate', async (req, res) => {
         if (attempt > 1) {
           console.log(`[Civora API] Retrying Gemini content generation... Attempt ${attempt}/${attempts}`);
         }
-        response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        response = await generateContentWithFallback(ai, {
+          preferredModel: 'gemini-3.5-flash',
           contents: prompt,
           config: {
             responseMimeType: 'application/json',
@@ -301,7 +336,8 @@ app.post('/api/generate-trend', async (req, res) => {
       console.log('[Civora API] No active reports found in last 7 days payload. Returning empty/clean streets summary.');
       console.log('========================================\n');
       res.json({ 
-        summary: 'No reports have been filed in the last 7 days. Our streets are looking clean and well-maintained! Keep up the great civic spirit.' 
+        summary: 'No reports have been filed in the last 7 days. Our streets are looking clean and well-maintained! Keep up the great civic spirit.',
+        forecast: 'Prediction unavailable. Check back in a moment.'
       });
       return;
     }
@@ -326,18 +362,46 @@ app.post('/api/generate-trend', async (req, res) => {
       return `- [Report #${idx + 1}] Category: "${category}" at coordinates (${latStr}, ${lngStr}) with "${severity}" severity.`;
     }).join('\n');
 
+    // Aggregate metrics for specific forecast prompt
+    const categoryCounts: Record<string, number> = {};
+    const hotspots: string[] = [];
+    reports.forEach((r: any) => {
+      const cat = r.category || 'Other';
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+      if (r.location) {
+        const parsedLat = Number(r.location.lat);
+        const parsedLng = Number(r.location.lng);
+        if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+          hotspots.push(`(${parsedLat.toFixed(4)}, ${parsedLng.toFixed(4)})`);
+        }
+      }
+    });
+
+    const countsString = Object.entries(categoryCounts).map(([cat, count]) => `${count} ${cat}`).join(', ');
+    const hotspotsString = hotspots.length > 0 ? hotspots.slice(0, 3).join(' and ') : 'N/A';
+    const aggregatedMetrics = `${countsString || '0 reports'}, hotspots at coordinates ${hotspotsString}`;
+
     console.log('[Civora API] Formatted items for Gemini prompt:\n', formattedReportsList);
 
     const prompt = `
-      You are the "Civora Civic Officer". Write a short, highly professional, encouraging, and informative plain-English paragraph summary (maximum of 3 or 4 engaging sentences) analyzing the community issue reports logged in the last 7 days.
+      You are the "Civora Civic Intelligence System". Analyze the following civic issue reports from the last 7 days.
       
-      Here is the raw list of reports logged:
+      --- RAW REPORTS LOG ---
       ${formattedReportsList}
 
-      Briefly summarize the trends, identifying which categories are most active, and point out any apparent problem hotspots (group by general location bins/areas). Do NOT output markdown charts, lists, or tables. Output ONLY the single paragraph text itself. Ready-to-read, warm, civic-oriented.
+      You must generate a response in valid JSON conforming to the requested schema containing two properties:
+      1. "summary": A short, highly professional, encouraging, and informative plain-English paragraph summary (maximum of 3 or 4 engaging sentences) analyzing the community issue reports logged in the last 7 days. Briefly summarize the trends, identifying which categories are most active, and point out any apparent problem hotspots (group by general location bins/areas). Do NOT output markdown charts, lists, or tables.
+      
+      2. "forecast": Generate a predictive forecast based on this prompt:
+         "Based on the civic issues reported in the last 7 days:
+         [${aggregatedMetrics}]
+         
+         Predict: What types of issues should the municipality expect next week? Which geographic areas are likely to see more reports? What resources should be prioritized?
+         
+         Respond in 2-3 sentences, professional and actionable."
     `;
 
-    console.log('[Civora API] Prompting Gemini 2.5 Flash for Weekly Summary generation...');
+    console.log('[Civora API] Prompting Gemini 2.5 Flash for Weekly Summary & Forecast generation...');
     
     let response: any;
     let attempts = 3; // 1 initial + 2 retries
@@ -349,9 +413,20 @@ app.post('/api/generate-trend', async (req, res) => {
           console.log(`[Civora API] Retrying trend generation... Attempt ${attempt}/${attempts}`);
         }
         
-        response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        response = await generateContentWithFallback(ai, {
+          preferredModel: 'gemini-3.5-flash',
           contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'OBJECT',
+              properties: {
+                summary: { type: 'STRING' },
+                forecast: { type: 'STRING' }
+              },
+              required: ['summary', 'forecast']
+            }
+          }
         });
         
         break; // break loop on success!
@@ -387,11 +462,11 @@ app.post('/api/generate-trend', async (req, res) => {
       throw lastError || new Error('Gemini API returned no content for trends summary.');
     }
 
-    const summaryText = response.text?.trim() || 'Trend analysis compiled successfully.';
-    console.log('[Civora API] Gemini response received successfully:', summaryText);
-    console.log('========================================\n');
+    const responseText = response.text || '{}';
+    console.log('[Civora API] Gemini response received raw:\n', responseText);
 
-    res.json({ summary: summaryText });
+    const parsedJson = safeJsonParse(responseText);
+    res.json(parsedJson);
 
   } catch (error: any) {
     console.error('[Civora API] Error generating trends:', error);

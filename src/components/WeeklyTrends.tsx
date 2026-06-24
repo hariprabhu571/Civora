@@ -29,6 +29,7 @@ import { CivicCategory, ReportStatus, SeverityLevel } from '../types';
 export default function WeeklyTrends() {
   const [loading, setLoading] = useState<boolean>(true);
   const [trendsText, setTrendsText] = useState<string>('');
+  const [forecastText, setForecastText] = useState<string>('');
   const [reportsCount, setReportsCount] = useState<number>(0);
   const [resolvedCount, setResolvedCount] = useState<number>(0);
   const [topCategory, setTopCategory] = useState<string>('N/A');
@@ -97,10 +98,12 @@ export default function WeeklyTrends() {
 
       const result = await response.json();
       setTrendsText(result.summary || 'Summary compiled successfully.');
+      setForecastText(result.forecast || 'Prediction unavailable. Check back in a moment.');
 
     } catch (err: any) {
       console.error('Error fetching trends:', err);
       setTrendsText('Failed to aggregate weekly metrics. Make sure you have reports submitted and GEMINI_API_KEY is configured in Settings.');
+      setForecastText('Prediction unavailable. Check back in a moment.');
     } finally {
       setLoading(false);
     }
@@ -508,6 +511,49 @@ export default function WeeklyTrends() {
               <p className="text-[14px] md:text-[16px] text-slate-200 leading-relaxed font-medium select-text italic pl-4">
                 "{trendsText}"
               </p>
+            </div>
+          </div>
+
+          {/* Predictive Civic Insights Card */}
+          <div id="predictive-forecast-card" className="glass-heavy gradient-border text-slate-100 p-6 md:p-7 rounded-2xl relative overflow-hidden shadow-2xl">
+            {/* Ambient background glow */}
+            <div className="absolute -top-12 -left-12 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-black tracking-widest bg-gradient-to-r from-cyan-950/80 to-violet-950/80 border border-cyan-500/20 text-cyan-300 px-2.5 py-1 rounded-full flex items-center gap-1.5 w-fit">
+                    <Sparkles size={11} className="text-cyan-300 animate-pulse shrink-0" /> Gemini Forecast
+                  </span>
+                  {reportsCount > 0 ? (
+                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                      reportsCount >= 5 
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                    }`}>
+                      {reportsCount >= 5 ? 'High confidence' : 'Moderate confidence'} ({reportsCount} {reportsCount === 1 ? 'report' : 'reports'})
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                      No recent data
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-display font-black text-base text-white flex items-center gap-2">
+                  📊 Next Week's Civic Forecast
+                </h3>
+                <p className="text-slate-400 text-[11px] font-semibold uppercase tracking-wider mt-0.5">AI-powered prediction based on 7-day trends</p>
+              </div>
+
+              <div className="bg-slate-950/40 border border-white/5 rounded-2xl p-4 md:p-5 mt-2">
+                <p className="text-[13px] md:text-[14px] text-slate-200 leading-relaxed font-medium select-text">
+                  {forecastText || 'Generating predictive civic insights...'}
+                </p>
+              </div>
             </div>
           </div>
 
