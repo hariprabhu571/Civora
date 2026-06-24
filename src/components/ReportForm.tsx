@@ -56,6 +56,7 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
   // Duplicate Matching states
   const [detectedDuplicate, setDetectedDuplicate] = useState<CivicReport | null>(null);
   const [duplicateReasoning, setDuplicateReasoning] = useState<string>('');
+  const [reporterEmail, setReporterEmail] = useState<string>(() => safeLocalStorage.getItem('civic_user_email') || '');
 
   // Inline styling non-blocking alert wrapper
   const [formNotice, setFormNotice] = useState<{ message: string; type: 'error' | 'success' | 'info' } | null>(null);
@@ -436,6 +437,10 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
       const uid = safeLocalStorage.getItem('civic_user_uuid') || Math.random().toString(36).substring(2, 12);
       safeLocalStorage.setItem('civic_user_uuid', uid);
 
+      if (reporterEmail.trim()) {
+        safeLocalStorage.setItem('civic_user_email', reporterEmail.trim());
+      }
+
       const payload = {
         photoUrl: finalPhotoUrl,
         category: aiDraft.category,
@@ -448,10 +453,51 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
         status: 'Reported',
         timestamp: new Date(), // Standard client date
         confirmations: 1,
-        confirmedUsers: [uid]
+        confirmedUsers: [uid],
+        reporterEmail: reporterEmail.trim() || null
       };
 
       const docRef = await addDoc(collection(db, 'reports'), payload);
+
+      if (reporterEmail.trim()) {
+        try {
+          console.log('[Civora Mail] Triggering automated dispatch email for new report...');
+          const res = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: reporterEmail.trim(),
+              category: aiDraft.category,
+              status: 'Reported',
+              description: aiDraft.formal_complaint_text,
+              beforeImage: finalPhotoUrl,
+              severity: aiDraft.severity,
+              responsible_department: aiDraft.responsible_department,
+              reportId: docRef.id
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.simulated) {
+              console.log('[Civora Mail] Simulated email logged successfully. Outbound SMTP restricted.');
+              triggerAlert('Report logged! A copy of your official dispatch email was simulated and logged to the server logs.', 'success');
+            } else if (data.previewUrl) {
+              console.log('[Civora Mail] Ethereal live preview ready:', data.previewUrl);
+              triggerAlert(`Report logged! Email sent. Preview in logs or open: ${data.previewUrl}`, 'success');
+            } else {
+              console.log('[Civora Mail] Email sent via SMTP relay.');
+              triggerAlert('Report logged! A formal dispatch email notification has been sent.', 'success');
+            }
+          } else {
+            const errorText = await res.text();
+            console.warn('[Civora Mail] Email endpoint returned non-200:', errorText);
+          }
+        } catch (mailErr) {
+          console.warn('[Civora Mail] Non-blocking mail dispatch failed:', mailErr);
+        }
+      }
+
       onSuccess(docRef.id, false);
 
     } catch (err: any) {
@@ -851,6 +897,24 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                       <option value="Sanitation Department">Sanitation Department</option>
                       <option value="Water Board">Water Board</option>
                     </select>
+                  </div>
+
+                  <div className="glass-card rounded-xl p-4 border border-violet-500/10">
+                    <label id="review-email" className="block text-xs font-semibold uppercase tracking-wider text-violet-300 mb-1.5 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+                      Email Address (Optional)
+                    </label>
+                    <input 
+                      id="draft-reporter-email"
+                      type="email"
+                      value={reporterEmail}
+                      onChange={(e) => setReporterEmail(e.target.value)}
+                      placeholder="e.g. citizen@example.com"
+                      className="w-full glass border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/40"
+                    />
+                    <p className="text-[10px] text-slate-400 font-medium mt-1.5">
+                      Enter your email to receive live, real-time automated updates, photos, and AI-audited resolution logs for this incident.
+                    </p>
                   </div>
                 </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, increment, arrayUnion } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import { safeLocalStorage } from './lib/storage';
@@ -7,6 +7,7 @@ import MapContainer from './components/MapContainer';
 import ReportForm from './components/ReportForm';
 import AdminPanel from './components/AdminPanel';
 import WeeklyTrends from './components/WeeklyTrends';
+import ReportImpact from './components/ReportImpact';
 import { 
   ShieldAlert, 
   MapPin, 
@@ -32,6 +33,18 @@ export default function App() {
   const [reports, setReports] = useState<CivicReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [focusedReportId, setFocusedReportId] = useState<string | null>(null);
+  const [userUuid, setUserUuid] = useState<string | null>(null);
+
+  // Initialize and persist userUuid
+  useEffect(() => {
+    let uid = safeLocalStorage.getItem('civic_user_uuid');
+    if (!uid) {
+      uid = Math.random().toString(36).substring(2, 12);
+      safeLocalStorage.setItem('civic_user_uuid', uid);
+    }
+    setUserUuid(uid);
+  }, []);
   
   // Real time Toast alerts state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -46,6 +59,8 @@ export default function App() {
     }, 4500);
   };
 
+  const previousStatusesRef = useRef<{ [id: string]: ReportStatus }>({});
+
   // Setup real-time listener for ALL reports
   useEffect(() => {
     const q = query(collection(db, 'reports'), orderBy('timestamp', 'desc'));
@@ -55,6 +70,54 @@ export default function App() {
       snapshot.forEach((doc) => {
         docs.push({ id: doc.id, ...doc.data() } as CivicReport);
       });
+
+      // Avoid showing status change toasts during the very first render/fetch
+      const isFirstLoad = Object.keys(previousStatusesRef.current).length === 0 && docs.length > 0;
+      const currentUserId = userUuid || safeLocalStorage.getItem('civic_user_uuid');
+
+      if (!isFirstLoad) {
+        // Find documents that changed status
+        docs.forEach((newReport) => {
+          const oldStatus = previousStatusesRef.current[newReport.id];
+          if (oldStatus && oldStatus !== newReport.status) {
+            // Check if this report was filed/supported by the current user
+            const isUserReport = currentUserId && newReport.confirmedUsers && newReport.confirmedUsers.includes(currentUserId);
+            
+            let message = '';
+            let type: 'success' | 'info' = 'info';
+
+            if (newReport.status === 'Under Review') {
+              message = isUserReport 
+                ? `Your ${newReport.category} report has been marked Under Review!` 
+                : `A citizen's ${newReport.category} report has been marked Under Review!`;
+              type = 'info';
+            } else if (newReport.status === 'Resolved') {
+              message = isUserReport 
+                ? `Your ${newReport.category} report has been successfully Resolved!` 
+                : `A citizen's ${newReport.category} report has been successfully Resolved!`;
+              type = 'success';
+            } else if (newReport.status === 'Reported') {
+              // Status went back to reported (unlikely but possible)
+              message = isUserReport
+                ? `Your ${newReport.category} report has been reset to Reported status.`
+                : `A citizen's ${newReport.category} report status reset to Reported.`;
+              type = 'info';
+            }
+
+            if (message) {
+              showToast(message, type);
+            }
+          }
+        });
+      }
+
+      // Update the previous statuses cache
+      const newStatuses: { [id: string]: ReportStatus } = {};
+      docs.forEach((report) => {
+        newStatuses[report.id] = report.status;
+      });
+      previousStatusesRef.current = newStatuses;
+
       setReports(docs);
       setLoading(false);
     }, (err) => {
@@ -63,7 +126,7 @@ export default function App() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [userUuid]);
 
   const handleReportSuccess = (reportId: string, isConfirmation: boolean) => {
     if (isConfirmation) {
@@ -72,6 +135,7 @@ export default function App() {
       showToast('New formal grievance filed! Dispatched to the service board.', 'success');
     }
     setSelectedReportId(reportId);
+    setFocusedReportId(reportId);
     setActiveTab('map');
   };
 
@@ -101,6 +165,8 @@ export default function App() {
   };
 
   const selectedReportDetails = reports.find(r => r.id === selectedReportId);
+  const mapFocusedReportId = focusedReportId || selectedReportId;
+  const mapFocusedReport = reports.find(r => r.id === mapFocusedReportId);
 
   return (
     <div className="bg-[#06080f] text-slate-100 min-h-screen flex flex-col font-sans select-none relative overflow-x-hidden antialiased">
@@ -155,7 +221,7 @@ export default function App() {
           {/* Logo Brand */}
           <div 
             id="brand-logo"
-            onClick={() => { setActiveTab('map'); setSelectedReportId(null); }}
+            onClick={() => { setActiveTab('map'); setSelectedReportId(null); setFocusedReportId(null); }}
             className="flex items-center gap-3 cursor-pointer group"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-violet-500 via-purple-500 to-cyan-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-violet-500/25 group-hover:shadow-violet-500/40 group-hover:scale-105 active:scale-95 transition-all">
@@ -198,7 +264,7 @@ export default function App() {
           {activeTab !== 'report' && (
             <button 
               id="header-report-btn"
-              onClick={() => { setActiveTab('report'); setSelectedReportId(null); }}
+              onClick={() => { setActiveTab('report'); setSelectedReportId(null); setFocusedReportId(null); }}
               className="btn-aurora rounded-xl px-5 py-2.5 text-xs font-display font-bold tracking-wide flex items-center gap-1.5 cursor-pointer"
             >
               <PlusCircle size={14} /> <span className="hidden md:inline">Report Incident</span><span className="md:hidden">Report</span>
@@ -265,78 +331,110 @@ export default function App() {
                       </div>
                       <p className="tracking-widest text-slate-500 uppercase text-[10px]">Synchronizing coordinates...</p>
                     </div>
-                  ) : reports.length === 0 ? (
-                    <div className="p-8 text-center glass-card rounded-2xl space-y-4 mt-4">
-                      <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-violet-500/15 to-cyan-500/15 border border-violet-500/20 flex items-center justify-center">
-                        <FileWarning size={24} className="text-violet-400" />
-                      </div>
-                      <p className="text-sm font-bold text-white">All coordinates clear!</p>
-                      <p className="text-[11px] text-slate-400 leading-relaxed">Be the first to report a broken streetlight, pothole, or trash pile in your neighborhood.</p>
-                      <button 
-                        id="empty-state-report-btn"
-                        onClick={() => setActiveTab('report')}
-                        className="mt-1 text-xs font-black text-gradient-aurora hover:opacity-80 transition"
-                      >
-                        File rapid complaint &rarr;
-                      </button>
-                    </div>
                   ) : (
-                    reports.map((report) => {
-                      const dateStr = report.timestamp?.seconds 
-                        ? new Date(report.timestamp.seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-                        : 'Just now';
+                    <>
+                      {userUuid && (
+                        <ReportImpact 
+                          reports={reports} 
+                          userUuid={userUuid} 
+                          onSelectReport={(reportId) => {
+                            setFocusedReportId(reportId);
+                            setSelectedReportId(null);
+                            
+                            // Smooth scroll the map wrapper into view on mobile/tablet
+                            setTimeout(() => {
+                              const mapWrap = document.getElementById('central-map-wrap');
+                              if (mapWrap) {
+                                mapWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              }
+                            }, 80);
 
-                      const statusClass = 
-                        report.status === 'Resolved' ? 'status-resolved' :
-                        report.status === 'Under Review' ? 'status-review' :
-                        'status-reported';
+                            // Scroll to drawer-item elements if needed
+                            const elem = document.getElementById(`drawer-item-${reportId}`);
+                            if (elem) {
+                              elem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                          }}
+                        />
+                      )}
 
-                      const severityLevel = 
-                        report.severity === 'High' ? 'high' :
-                        report.severity === 'Medium' ? 'medium' :
-                        'low';
-
-                      return (
-                        <div 
-                          id={`drawer-item-${report.id}`}
-                          key={report.id}
-                          onClick={() => setSelectedReportId(report.id)}
-                          className={`group glass-card p-3.5 rounded-2xl cursor-pointer transition-all duration-200 flex gap-3.5 relative overflow-hidden hover:shadow-violet-500/5 hover:shadow-lg ${selectedReportId === report.id ? 'ring-1 ring-violet-500/50 bg-violet-500/5 shadow-lg shadow-violet-500/10' : ''}`}
-                        >
-                          {/* Severity dot indicator */}
-                          <div className="absolute top-3 left-3">
-                            <div className={`severity-dot severity-dot-${severityLevel}`} />
+                      {reports.length === 0 ? (
+                        <div className="p-8 text-center glass-card rounded-2xl space-y-4 mt-4">
+                          <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-violet-500/15 to-cyan-500/15 border border-violet-500/20 flex items-center justify-center">
+                            <FileWarning size={24} className="text-violet-400" />
                           </div>
-
-                          {report.photoUrl ? (
-                            <div className="w-14 h-14 bg-slate-950 flex-shrink-0 overflow-hidden rounded-xl border border-white/5 ml-4">
-                              <img src={report.photoUrl} className="w-full h-full object-cover group-hover:scale-105 transition duration-305" referrerPolicy="no-referrer" />
-                            </div>
-                          ) : (
-                            <div className="w-14 h-14 bg-slate-950 rounded-xl shrink-0 flex items-center justify-center border border-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-wider ml-4">
-                              No pic
-                            </div>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-1.5">
-                              <h4 className="text-[13px] font-extrabold text-white leading-none truncate group-hover:text-violet-400 transition">{report.category}</h4>
-                              <span className="text-[9px] text-slate-500 shrink-0 font-extrabold uppercase flex items-center gap-1">
-                                <Calendar size={9} className="text-slate-600" />
-                                {dateStr}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-400 mt-2 line-clamp-2 leading-relaxed italic">
-                              "{report.userNotes || 'No citizen notes added.'}"
-                            </p>
-
-                            <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
-                              <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full ${statusClass}`}>{report.status}</span>
-                              <span className="text-[9px] text-slate-400 font-extrabold bg-slate-950/40 border border-white/5 px-2 py-0.5 rounded-full">💼 {report.responsible_department}</span>
-                            </div>
-                          </div>
+                          <p className="text-sm font-bold text-white">All coordinates clear!</p>
+                          <p className="text-[11px] text-slate-400 leading-relaxed">Be the first to report a broken streetlight, pothole, or trash pile in your neighborhood.</p>
+                          <button 
+                            id="empty-state-report-btn"
+                            onClick={() => setActiveTab('report')}
+                            className="mt-1 text-xs font-black text-gradient-aurora hover:opacity-80 transition"
+                          >
+                            File rapid complaint &rarr;
+                          </button>
                         </div>
-                      );
-                    })
+                      ) : (
+                        reports.map((report) => {
+                          const dateStr = report.timestamp?.seconds 
+                            ? new Date(report.timestamp.seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                            : 'Just now';
+
+                          const statusClass = 
+                            report.status === 'Resolved' ? 'status-resolved' :
+                            report.status === 'Under Review' ? 'status-review' :
+                            'status-reported';
+
+                          const severityLevel = 
+                            report.severity === 'High' ? 'high' :
+                            report.severity === 'Medium' ? 'medium' :
+                            'low';
+
+                          return (
+                            <div 
+                              id={`drawer-item-${report.id}`}
+                              key={report.id}
+                              onClick={() => {
+                                setSelectedReportId(report.id);
+                                setFocusedReportId(report.id);
+                              }}
+                              className={`group glass-card p-3.5 rounded-2xl cursor-pointer transition-all duration-200 flex gap-3.5 relative overflow-hidden hover:shadow-violet-500/5 hover:shadow-lg ${selectedReportId === report.id ? 'ring-1 ring-violet-500/50 bg-violet-500/5 shadow-lg shadow-violet-500/10' : ''}`}
+                            >
+                              {/* Severity dot indicator */}
+                              <div className="absolute top-3 left-3">
+                                <div className={`severity-dot severity-dot-${severityLevel}`} />
+                              </div>
+
+                              {report.photoUrl ? (
+                                <div className="w-14 h-14 bg-slate-950 flex-shrink-0 overflow-hidden rounded-xl border border-white/5 ml-4">
+                                  <img src={report.photoUrl} className="w-full h-full object-cover group-hover:scale-105 transition duration-305" referrerPolicy="no-referrer" />
+                                </div>
+                              ) : (
+                                <div className="w-14 h-14 bg-slate-950 rounded-xl shrink-0 flex items-center justify-center border border-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-wider ml-4">
+                                  No pic
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-1.5">
+                                  <h4 className="text-[13px] font-extrabold text-white leading-none truncate group-hover:text-violet-400 transition">{report.category}</h4>
+                                  <span className="text-[9px] text-slate-500 shrink-0 font-extrabold uppercase flex items-center gap-1">
+                                    <Calendar size={9} className="text-slate-600" />
+                                    {dateStr}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-slate-400 mt-2 line-clamp-2 leading-relaxed italic">
+                                  "{report.userNotes || 'No citizen notes added.'}"
+                                </p>
+
+                                <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                                  <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full ${statusClass}`}>{report.status}</span>
+                                  <span className="text-[9px] text-slate-400 font-extrabold bg-slate-950/40 border border-white/5 px-2 py-0.5 rounded-full">💼 {report.responsible_department}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -346,9 +444,12 @@ export default function App() {
                 <MapContainer 
                   mode="view"
                   reports={reports}
-                  center={selectedReportDetails?.location ? [selectedReportDetails.location.lat, selectedReportDetails.location.lng] : [37.7749, -122.4194]}
-                  selectedReportId={selectedReportId}
-                  onSelectReport={(reportId) => setSelectedReportId(reportId)}
+                  center={mapFocusedReport?.location ? [mapFocusedReport.location.lat, mapFocusedReport.location.lng] : [37.7749, -122.4194]}
+                  selectedReportId={mapFocusedReportId}
+                  onSelectReport={(reportId) => {
+                    setSelectedReportId(reportId);
+                    setFocusedReportId(reportId);
+                  }}
                 />
                 
                 {/* Floating button on maps */}
@@ -381,7 +482,10 @@ export default function App() {
                       </div>
                       <button 
                         id="close-drawer-btn"
-                        onClick={() => setSelectedReportId(null)}
+                        onClick={() => {
+                          setSelectedReportId(null);
+                          setFocusedReportId(null);
+                        }}
                         className="glass p-2 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl transition-colors cursor-pointer"
                       >
                         <X size={16} />

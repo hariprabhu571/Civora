@@ -34,6 +34,7 @@ export interface CivicReport {
   resolutionVerified?: 'verified' | 'unresolved' | 'none';
   resolutionConfidence?: number;
   resolutionExplanation?: string;
+  reporterEmail?: string;
 }
 
 export interface AIDraftData {

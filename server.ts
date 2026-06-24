@@ -6,6 +6,7 @@ import { GoogleGenAI } from '@google/genai';
 import { initializeApp as initializeFirebaseApp } from 'firebase/app';
 import { getStorage as getFirebaseStorage, ref as firebaseStorageRef, uploadString as firebaseUploadString, getDownloadURL as firebaseGetDownloadURL } from 'firebase/storage';
 import dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
 
 // Load environment variables
 dotenv.config();
@@ -97,6 +98,428 @@ const safeJsonParse = (text: string): any => {
 // API: Server Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// API: Send Email notification for issue log or status change
+app.post('/api/send-email', async (req, res) => {
+  try {
+    const { to, category, status, description, beforeImage, afterImage, severity, responsible_department, reportId } = req.body;
+
+    if (!to) {
+      res.status(400).json({ error: 'to parameter is required' });
+      return;
+    }
+
+    console.log(`[Civora Mail] Received request to send status update email to: ${to} (Status: ${status})`);
+
+    const attachments: any[] = [];
+
+    const processImageAttachment = (img: string | undefined, cid: string) => {
+      if (!img) return undefined;
+      
+      // If it's a base64 data url, parse and create a CID attachment
+      if (img.startsWith('data:')) {
+        const matches = img.match(/^data:([^;]+);base64,(.+)$/);
+        if (matches && matches.length === 3) {
+          const contentType = matches[1];
+          const base64Data = matches[2];
+          attachments.push({
+            filename: `${cid}.${contentType.split('/')[1] || 'png'}`,
+            content: Buffer.from(base64Data, 'base64'),
+            cid: cid
+          });
+          return `cid:${cid}`;
+        }
+      }
+      
+      // If it starts with http or https, return it as is
+      if (img.startsWith('http://') || img.startsWith('https://')) {
+        return img;
+      }
+      
+      // Construct absolute URL for standard local files
+      const host = req.get('host');
+      const protocol = req.protocol;
+      return `${protocol}://${host}${img}`;
+    };
+
+    const formattedBefore = processImageAttachment(beforeImage, 'before_photo');
+    const formattedAfter = processImageAttachment(afterImage, 'after_photo');
+
+    let statusBadgeClass = 'badge-reported';
+    if (status === 'Under Review') statusBadgeClass = 'badge-review';
+    if (status === 'Resolved') statusBadgeClass = 'badge-resolved';
+
+    let severityBadgeClass = 'badge-medium';
+    if (severity === 'High') severityBadgeClass = 'badge-high';
+    if (severity === 'Low') severityBadgeClass = 'badge-low';
+
+    // Build subject line
+    let subject = `[Civora Update] Civic Report Status: ${status} (${category})`;
+    if (status === 'Reported') {
+      subject = `[Civora Citizen] Civic Report Successfully Logged: ${category}`;
+    }
+
+    // Build personalized dynamic greetings text
+    let greetingsText = '';
+    if (status === 'Reported') {
+      greetingsText = `Thank you for filing this civic report. Your vigilance and active community participation help our municipal boards locate defects, bypass bureaucratic delays, and keep our streets safe. We have logged and dispatched this issue to the designated agency.`;
+    } else if (status === 'Under Review') {
+      greetingsText = `Great news! The designated board has formally accepted your report and has assigned field staff to investigate the issue. Work preparations are currently under review.`;
+    } else if (status === 'Resolved') {
+      greetingsText = `Success! The department has marked this issue as fully resolved. Our AI Resolution Auditor has reviewed the geotagged proof of work and validated the fix. Thank you for making our city a better place!`;
+    } else {
+      greetingsText = `Your report has been updated to status: "${status}". Thank you for your continued engagement in our civic ecosystem.`;
+    }
+
+    // Generate HTML Body
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #06080f;
+            color: #cbd5e1;
+            margin: 0;
+            padding: 0;
+          }
+          .wrapper {
+            background-color: #06080f;
+            padding: 30px 15px;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #0d111d;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          }
+          .header {
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            padding: 30px;
+            text-align: center;
+          }
+          .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+          }
+          .header p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 8px 0 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+          }
+          .content {
+            padding: 30px;
+          }
+          .greetings {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #f1f5f9;
+            margin-bottom: 25px;
+          }
+          .card {
+            background-color: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+          }
+          .meta-grid {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          .meta-label {
+            font-weight: 700;
+            color: #94a3b8;
+            font-size: 13px;
+            padding: 6px 0;
+            width: 140px;
+            text-align: left;
+          }
+          .meta-value {
+            color: #f1f5f9;
+            font-size: 13px;
+            padding: 6px 0;
+            text-align: left;
+          }
+          .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 6px;
+            letter-spacing: 0.05em;
+          }
+          .badge-reported { background-color: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+          .badge-review { background-color: rgba(34, 211, 238, 0.15); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.2); }
+          .badge-resolved { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+          
+          .badge-high { background-color: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+          .badge-medium { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+          .badge-low { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+
+          .description-box {
+            font-size: 13px;
+            line-height: 1.6;
+            background-color: #06080f;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
+            margin-top: 15px;
+          }
+          .images-section {
+            margin-top: 25px;
+            text-align: center;
+          }
+          .image-card {
+            display: inline-block;
+            width: 47%;
+            margin: 0 1% 15px;
+            vertical-align: top;
+            text-align: left;
+          }
+          .image-card img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background-color: #06080f;
+            object-fit: cover;
+          }
+          .image-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-top: 5px;
+            display: block;
+            text-align: center;
+            letter-spacing: 0.05em;
+          }
+          .footer {
+            background-color: #0a0d16;
+            padding: 25px 30px;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 11px;
+            color: #64748b;
+          }
+          .footer p {
+            margin: 5px 0;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="wrapper">
+          <div class="container">
+            <div class="header">
+              <h1>CIVORA CITIZEN DISPATCH</h1>
+              <p>MUNICIPAL ACCOUNTABILITY SYSTEM</p>
+            </div>
+            <div class="content">
+              <div class="greetings">
+                <p>Hello,</p>
+                <p>${greetingsText}</p>
+              </div>
+              
+              <div class="card">
+                <table class="meta-grid">
+                  <tr>
+                    <td class="meta-label">Incident ID</td>
+                    <td class="meta-value" style="font-family: monospace; font-size: 12px; color: #a78bfa;">${reportId || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td class="meta-label">Category</td>
+                    <td class="meta-value">${category || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td class="meta-label">Status</td>
+                    <td class="meta-value">
+                      <span class="badge ${statusBadgeClass}">${status}</span>
+                    </td>
+                  </tr>
+                  ${severity ? `
+                  <tr>
+                    <td class="meta-label">Severity Level</td>
+                    <td class="meta-value">
+                      <span class="badge ${severityBadgeClass}">${severity}</span>
+                    </td>
+                  </tr>` : ''}
+                  ${responsible_department ? `
+                  <tr>
+                    <td class="meta-label">Dispatched To</td>
+                    <td class="meta-value" style="font-weight: bold; color: #ffffff;">${responsible_department}</td>
+                  </tr>` : ''}
+                </table>
+
+                ${description ? `
+                <div class="description-box">
+                  <strong style="display: block; font-size: 11px; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; letter-spacing: 0.05em;">Incident Report Analysis & Formal Complaint:</strong>
+                  ${description}
+                </div>` : ''}
+              </div>
+
+              ${(status === 'Resolved' && (formattedBefore || formattedAfter)) ? `
+              <div class="images-section">
+                ${formattedBefore ? `
+                <div class="image-card">
+                  <img src="${formattedBefore}" alt="Before Photo">
+                  <span class="image-label">BEFORE PHOTO</span>
+                </div>` : ''}
+                ${formattedAfter ? `
+                <div class="image-card">
+                  <img src="${formattedAfter}" alt="After Photo">
+                  <span class="image-label">AFTER PHOTO</span>
+                </div>` : ''}
+              </div>` : ''}
+            </div>
+            <div class="footer">
+              <p>This is an automated notification from the <strong>Civora Resolution Platform</strong>.</p>
+              <p>Strengthening democratic municipal workflow through real-time feedback and AI accountability audits.</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Initialize transporter and send mail with a fail-safe simulated fallback
+    let mailSent = false;
+    let messageId = '';
+    let previewUrl: string | boolean | undefined = undefined;
+    let sendErrorMsg = '';
+
+    const host = process.env.SMTP_HOST;
+    const port = process.env.SMTP_PORT;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+    const fromEnv = process.env.SMTP_FROM;
+
+    if (host && user && pass) {
+      try {
+        console.log('[Civora Mail] Attempting custom SMTP delivery...');
+        const transporter = nodemailer.createTransport({
+          host,
+          port: parseInt(port || '587'),
+          secure: port === '465',
+          auth: { user, pass }
+        });
+
+        const fromName = "Civora Citizen Dispatch";
+        let fromEmail = fromEnv || user;
+        if (!fromEmail || !fromEmail.includes('@')) {
+          if (host.includes('resend')) {
+            fromEmail = 'onboarding@resend.dev';
+          } else {
+            fromEmail = 'noreply@civora.local';
+          }
+        }
+
+        console.log(`[Civora Mail] Using SMTP Sender Address: ${fromEmail}`);
+
+        const mailOptions: any = {
+          from: `"${fromName}" <${fromEmail}>`,
+          to,
+          subject,
+          html: htmlContent
+        };
+
+        if (attachments.length > 0) {
+          mailOptions.attachments = attachments;
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+        messageId = info.messageId;
+        mailSent = true;
+        console.log('[Civora Mail] Email successfully sent to production recipient! Message ID:', info.messageId);
+      } catch (err: any) {
+        console.error('[Civora Mail] Custom SMTP delivery failed, falling back:', err.message || err);
+        sendErrorMsg = err.message || String(err);
+      }
+    } else {
+      // Try Ethereal if possible, but catch errors instantly if external networking is blocked
+      try {
+        console.log('[Civora Mail] No custom SMTP credentials. Attempting temporary Ethereal SMTP account creation...');
+        const testAccount = await nodemailer.createTestAccount();
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.ethereal.email',
+          port: 587,
+          secure: false,
+          auth: {
+            user: testAccount.user,
+            pass: testAccount.pass
+          }
+        });
+
+        const fromName = "Civora Citizen Dispatch";
+        const fromEmail = "noreply@civora.local";
+        const mailOptions: any = {
+          from: `"${fromName}" <${fromEmail}>`,
+          to,
+          subject,
+          html: htmlContent
+        };
+
+        if (attachments.length > 0) {
+          mailOptions.attachments = attachments;
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+        messageId = info.messageId;
+        previewUrl = nodemailer.getTestMessageUrl(info);
+        mailSent = true;
+        if (previewUrl) {
+          console.log('[Civora Mail] 📬 Test Email successfully sent! View live rendering at:', previewUrl);
+        }
+      } catch (err: any) {
+        console.warn('[Civora Mail] Ethereal SMTP failed or blocked by sandbox network. Switching to simulated mode:', err.message || err);
+        sendErrorMsg = err.message || String(err);
+      }
+    }
+
+    // Fallback: If mail was not sent successfully, run simulated delivery
+    if (!mailSent) {
+      console.log('\n=================== 📨 CIVORA SIMULATED EMAIL DISPATCH ===================');
+      console.log(`TO:      ${to}`);
+      console.log(`SUBJECT: ${subject}`);
+      console.log(`STATUS:  ${status}`);
+      console.log(`DEPT:    ${responsible_department || 'N/A'}`);
+      console.log(`DETAILS: ${description ? description.substring(0, 150) + '...' : 'None'}`);
+      console.log('--------------------------------------------------------------------------');
+      console.log('[SIMULATION NOTE] Outbound SMTP connection was restricted or unconfigured.');
+      console.log('The above notification was successfully simulated and logged to console.');
+      console.log('==========================================================================\n');
+      
+      messageId = `sim_${Math.random().toString(36).substring(2, 12)}`;
+    }
+
+    res.json({
+      success: true,
+      simulated: !mailSent,
+      messageId,
+      previewUrl: previewUrl || undefined,
+      errorDetails: sendErrorMsg || undefined
+    });
+
+  } catch (error: any) {
+    console.error('[Civora Mail] Unexpected error in mail dispatch endpoint:', error);
+    res.status(500).json({
+      error: 'Failed to process email notification',
+      details: error.message || error
+    });
+  }
 });
 
 // API: Analyze Civic Issue (Classification, Severity, Department, Formal Complaint Draft)

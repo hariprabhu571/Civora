@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { CivicReport, ReportStatus, CivicCategory, SeverityLevel } from '../types';
-import { Trash2, AlertCircle, Clock, CheckCircle2, ChevronRight, Filter, Search, MapPin, Eye, FileSpreadsheet, Layers, Sparkles, Lock, ShieldAlert, UploadCloud, ShieldCheck, Camera, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Trash2, AlertCircle, Clock, CheckCircle2, ChevronRight, Filter, Search, MapPin, Eye, FileSpreadsheet, Layers, Sparkles, Lock, ShieldAlert, UploadCloud, ShieldCheck, Camera, RefreshCw, AlertTriangle, Building2 } from 'lucide-react';
 
 export default function AdminPanel() {
   const [reports, setReports] = useState<CivicReport[]>([]);
@@ -198,6 +198,26 @@ export default function AdminPanel() {
       const docRef = doc(db, 'reports', reportId);
       await updateDoc(docRef, { status: nextStatus });
       showAdminNotice(`Status successfully updated to ${nextStatus}`, 'success');
+
+      // Dispatch real-time email notification if reporter email is present
+      const report = reports.find(r => r.id === reportId);
+      if (report && report.reporterEmail) {
+        console.log('[Civora Mail] Dispatching status transition email to:', report.reporterEmail);
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: report.reporterEmail,
+            category: report.category,
+            status: nextStatus,
+            description: report.formal_complaint_text,
+            beforeImage: report.photoUrl,
+            severity: report.severity,
+            responsible_department: report.responsible_department,
+            reportId: report.id
+          })
+        }).catch(err => console.warn('[Civora Mail] Email trigger failed:', err));
+      }
     } catch (err: any) {
       showAdminNotice('Failed to update status: ' + err.message, 'error');
     }
@@ -275,6 +295,26 @@ export default function AdminPanel() {
           status: 'Resolved'
         });
         showAdminNotice('Civic issue successfully verified and marked as Resolved!', 'success');
+
+        // Dispatch real-time email notification if reporter email is present
+        if (report.reporterEmail) {
+          console.log('[Civora Mail] Dispatching resolution email to:', report.reporterEmail);
+          fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: report.reporterEmail,
+              category: report.category,
+              status: 'Resolved',
+              description: report.formal_complaint_text,
+              beforeImage: report.photoUrl,
+              afterImage: resolutionPhotoUrl,
+              severity: report.severity,
+              responsible_department: report.responsible_department,
+              reportId: report.id
+            })
+          }).catch(err => console.warn('[Civora Mail] Email trigger failed:', err));
+        }
         
         // Reset local resolution states
         setIsCapturingResolution(false);
@@ -348,6 +388,33 @@ export default function AdminPanel() {
     
     return matchesStatus && matchesSeverity && matchesCategory && matchesSearch;
   });
+
+  // Departments to always track and display stats for:
+  const targetDepartments = [
+    'Municipal Corporation',
+    'Electricity Board',
+    'Water Board'
+  ];
+
+  // Dynamically find any other departments present in the loaded database reports
+  const allDepartmentsInReports = Array.from(new Set(reports.map(r => r.responsible_department).filter(Boolean))) as string[];
+  
+  // Combine lists, filtering out duplicates while preserving targetDepartments order
+  const departmentsToRender = Array.from(
+    new Set([
+      ...targetDepartments,
+      ...allDepartmentsInReports
+    ])
+  ) as string[];
+
+  const getDepartmentStats = (deptName: string) => {
+    const deptReports = reports.filter(r => r.responsible_department?.toLowerCase().trim() === deptName.toLowerCase().trim());
+    const openCount = deptReports.filter(r => r.status === 'Reported').length;
+    const reviewCount = deptReports.filter(r => r.status === 'Under Review').length;
+    const resolvedCount = deptReports.filter(r => r.status === 'Resolved').length;
+    const total = deptReports.length;
+    return { openCount, reviewCount, resolvedCount, total };
+  };
 
   const getSeverityBadge = (level: SeverityLevel) => {
     switch (level) {
@@ -751,6 +818,97 @@ export default function AdminPanel() {
           <div className="lg:col-span-1">
             <div className="sticky top-6 space-y-6">
               
+              {/* Department Performance & Accountability Stats */}
+              <div id="department-accountability-stats" className="glass-heavy rounded-3xl shadow-2xl p-6 flex flex-col space-y-4.5 relative overflow-hidden">
+                {/* Decorative background glow */}
+                <div className="absolute -top-10 -right-10 w-24 h-24 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="flex items-center gap-3 pb-3 border-b border-white/5">
+                  <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-br from-violet-500/10 to-cyan-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+                    <Building2 size={16} className="animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-white text-[13px] leading-tight">Department Accountability</h3>
+                    <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mt-0.5">Municipal Performance Audit</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {departmentsToRender.map((dept) => {
+                    const stats = getDepartmentStats(dept);
+                    const resolutionRate = stats.total > 0 
+                      ? Math.round((stats.resolvedCount / stats.total) * 100) 
+                      : 0;
+
+                    return (
+                      <div key={dept} className="glass-card rounded-2xl p-4.5 space-y-3.5 border border-white/[0.02] hover:border-violet-500/10 transition-all duration-300">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h4 className="text-[13px] font-bold text-slate-100 block leading-tight">{dept}</h4>
+                            <span className="text-[9px] text-slate-500 font-extrabold uppercase mt-0.5 block">
+                              {stats.total} total incident{stats.total !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          {stats.total > 0 ? (
+                            <div className="flex flex-col items-end shrink-0">
+                              <span className={`text-[13px] font-black leading-none ${
+                                resolutionRate >= 70 ? 'text-emerald-400' :
+                                resolutionRate >= 30 ? 'text-cyan-400' :
+                                'text-rose-400'
+                              }`}>{resolutionRate}%</span>
+                              <span className="text-[8px] uppercase tracking-widest text-slate-500 font-extrabold mt-0.5">Solved</span>
+                            </div>
+                          ) : (
+                            <span className="text-[9px] uppercase tracking-widest text-slate-600 font-extrabold bg-white/[0.02] border border-white/5 px-2 py-0.5 rounded-md">Idle</span>
+                          )}
+                        </div>
+
+                        {/* Custom visual progress bar */}
+                        {stats.total > 0 ? (
+                          <div className="h-2 w-full bg-slate-950/40 border border-white/5 rounded-full overflow-hidden flex shadow-inner">
+                            <div 
+                              style={{ width: `${(stats.openCount / stats.total) * 100}%` }} 
+                              className="h-full bg-gradient-to-r from-rose-500 to-rose-600 transition-all duration-500" 
+                              title={`${stats.openCount} open`}
+                            />
+                            <div 
+                              style={{ width: `${(stats.reviewCount / stats.total) * 100}%` }} 
+                              className="h-full bg-gradient-to-r from-cyan-400 to-cyan-500 transition-all duration-500" 
+                              title={`${stats.reviewCount} under review`}
+                            />
+                            <div 
+                              style={{ width: `${(stats.resolvedCount / stats.total) * 100}%` }} 
+                              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500" 
+                              title={`${stats.resolvedCount} resolved`}
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-2 w-full bg-slate-950/20 border border-dashed border-white/5 rounded-full overflow-hidden flex items-center justify-center">
+                            <span className="text-[8px] text-slate-600 font-bold tracking-widest uppercase">No pending dispatches</span>
+                          </div>
+                        )}
+
+                        {/* Text counts: "5 open, 2 under review, 1 resolved" */}
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                            <span>{stats.openCount} open</span>
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
+                            <span>{stats.reviewCount} under review</span>
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                            <span>{stats.resolvedCount} resolved</span>
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {selectedReport ? (
                 <div id="inspector-card" className="glass-heavy rounded-3xl shadow-2xl p-6 flex flex-col space-y-5 animate-fade-in-up relative overflow-hidden">
                   {/* Decorative aurora orbs */}
