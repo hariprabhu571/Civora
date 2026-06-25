@@ -544,7 +544,7 @@ app.post('/api/analyze-issue', async (req, res) => {
       and combine it with their raw notes or transcribed voice notes: "${userNotesByVoiceOrText || '(No additional notes provided)'}".
 
       Please classify the report and return a SINGLE JSON object conforming STRICTLY to the following typescript schema rules:
-      - category: One of the string literals: "Pothole", "Streetlight", "Garbage/Waste", "Water Leakage", "Damaged Public Property", "Other"
+      - category: One of the string literals: "Pothole", "Streetlight", "Garbage/Waste", "Water Leakage", "Damaged Public Property", "Traffic Signal Issue", "Public Toilet Issue", "Tree Fallen", "Illegal Dumping", "Other"
       - severity: One of the string literals: "Low", "Medium", "High"
       - severity_reasoning: List 1-2 rapid sentences explaining why this severity was assigned.
       - responsible_department: Select the most appropriate public department based on this category map:
@@ -553,8 +553,36 @@ app.post('/api/analyze-issue', async (req, res) => {
         * Streetlight -> "Electricity Board"
         * Garbage/Waste -> "Sanitation Department"
         * Water Leakage -> "Water Board"
+        * Traffic Signal Issue -> "Traffic Police"
+        * Public Toilet Issue -> "Sanitation Department"
+        * Tree Fallen -> "Forest Department"
+        * Illegal Dumping -> "Sanitation Department"
         * Other -> "Municipal Corporation" (or appropriate department in text)
-      - formal_complaint_text: A beautifully formatted, formal, articulate, and polite email-like formal complaint paragraph addressed to the responsible department. Include specific visual descriptions noticed in the image, describe the safety hazards, and formally request corrective action. Do NOT use placeholder text.
+      - formal_complaint_text: A formal, structured public grievance petition styled EXACTLY in the official format used in Indian municipalities (e.g., BBMP, MCD, BMC). It must be structured with newlines as follows:
+        
+        To,
+        The Commissioner / Executive Engineer,
+        [Insert the selected responsible_department],
+        Municipal Zonal Office, Ward No. 42
+        
+        Subject: Formal Grievance Petition regarding [Brief Title of Issue]
+
+        Respected Sir/Madam,
+
+        I am writing as a concerned citizen of this ward to formally bring to your urgent attention a severe public grievance regarding [specific issue] at this locality.
+
+        The details of the civic issue observed are as follows:
+        1. Nature of Grievance: [Describe the visual details, size, and severity as observed in the photograph]
+        2. Immediate Safety Hazards: [Mention specific risks to road users, children, senior citizens, vehicle damage, or hygiene hazards]
+        3. Local Community Impact: [Describe how it disrupts daily life, traffic, or public health in the surrounding residential block]
+
+        Under the Citizen Charter and Right to Public Services, I earnestly request your esteemed office to direct the ward inspector or site engineers to conduct an immediate on-site inspection and undertake emergency rectification works to resolve this hazard without delay.
+
+        Thanking you.
+
+        Yours faithfully,
+        Concerned Citizen of India
+        (Submitted Digitally via Civora Citizen Dispatch System)
 
       Ensure the output is valid JSON and contains only the specified fields with no extra formatting.
     `;
@@ -578,7 +606,7 @@ app.post('/api/analyze-issue', async (req, res) => {
           properties: {
             category: {
               type: 'STRING',
-              enum: ['Pothole', 'Streetlight', 'Garbage/Waste', 'Water Leakage', 'Damaged Public Property', 'Other'],
+              enum: ['Pothole', 'Streetlight', 'Garbage/Waste', 'Water Leakage', 'Damaged Public Property', 'Traffic Signal Issue', 'Public Toilet Issue', 'Tree Fallen', 'Illegal Dumping', 'Other'],
             },
             severity: {
               type: 'STRING',
@@ -589,7 +617,7 @@ app.post('/api/analyze-issue', async (req, res) => {
             },
             responsible_department: {
               type: 'STRING',
-              enum: ['Municipal Corporation', 'Electricity Board', 'Sanitation Department', 'Water Board', 'Other'],
+              enum: ['Municipal Corporation', 'Electricity Board', 'Sanitation Department', 'Water Board', 'Traffic Police', 'Forest Department', 'Other'],
             },
             formal_complaint_text: {
               type: 'STRING',

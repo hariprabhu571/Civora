@@ -407,6 +407,10 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
                 <option value="Garbage/Waste">Garbage / Waste</option>
                 <option value="Water Leakage">Water Leakages</option>
                 <option value="Damaged Public Property">Public Property</option>
+                <option value="Traffic Signal Issue">Traffic Signals</option>
+                <option value="Public Toilet Issue">Public Toilets</option>
+                <option value="Tree Fallen">Fallen Trees</option>
+                <option value="Illegal Dumping">Illegal Dumping</option>
                 <option value="Other">Other</option>
               </select>
               <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">▼</div>

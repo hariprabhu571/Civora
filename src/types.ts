@@ -4,6 +4,10 @@ export type CivicCategory =
   | 'Garbage/Waste'
   | 'Water Leakage'
   | 'Damaged Public Property'
+  | 'Traffic Signal Issue'
+  | 'Public Toilet Issue'
+  | 'Tree Fallen'
+  | 'Illegal Dumping'
   | 'Other';
 
 export type SeverityLevel = 'Low' | 'Medium' | 'High';
@@ -35,6 +39,8 @@ export interface CivicReport {
   resolutionConfidence?: number;
   resolutionExplanation?: string;
   reporterEmail?: string;
+  citizenFeedback?: 'Yes' | 'Partially' | 'No' | null;
+  reopenedAt?: any;
 }
 
 export interface AIDraftData {

@@ -381,10 +381,11 @@ export default function AdminPanel() {
     const matchesSeverity = filterSeverity === 'All' || report.severity === filterSeverity;
     const matchesCategory = filterCategory === 'All' || report.category === filterCategory;
     const matchesSearch = 
-      report.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.formal_complaint_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (report.category && report.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (report.formal_complaint_text && report.formal_complaint_text.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (report.userNotes && report.userNotes.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      report.responsible_department.toLowerCase().includes(searchTerm.toLowerCase());
+      (report.responsible_department && report.responsible_department.toLowerCase().includes(searchTerm.toLowerCase()));
     
     return matchesStatus && matchesSeverity && matchesCategory && matchesSearch;
   });
@@ -724,6 +725,10 @@ export default function AdminPanel() {
                   <option value="Garbage/Waste">Garbage/Waste</option>
                   <option value="Water Leakage">Water Leakage</option>
                   <option value="Damaged Public Property">Damaged Public Property</option>
+                  <option value="Traffic Signal Issue">Traffic Signal Issue</option>
+                  <option value="Public Toilet Issue">Public Toilet Issue</option>
+                  <option value="Tree Fallen">Tree Fallen</option>
+                  <option value="Illegal Dumping">Illegal Dumping</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
@@ -992,7 +997,7 @@ export default function AdminPanel() {
                       <span className="text-[9px] uppercase tracking-wider text-violet-400 font-black flex items-center gap-1 mb-1">
                         <Sparkles size={11} /> formal municipal grievance letter
                       </span>
-                      <p className="text-slate-300 glass rounded-xl p-4 select-text leading-relaxed font-mono text-[11px] max-h-[140px] overflow-y-auto font-medium border-violet-500/10 mt-1">
+                      <p className="text-slate-300 glass rounded-xl p-4 select-text leading-relaxed font-mono text-[11px] max-h-[140px] overflow-y-auto font-medium border-violet-500/10 mt-1 whitespace-pre-wrap">
                         {selectedReport.formal_complaint_text}
                       </p>
                     </div>

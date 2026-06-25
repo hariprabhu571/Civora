@@ -853,6 +853,10 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
                       <option value="Garbage/Waste">Garbage/Waste</option>
                       <option value="Water Leakage">Water Leakage</option>
                       <option value="Damaged Public Property">Damaged Public Property</option>
+                      <option value="Traffic Signal Issue">Traffic Signal Issue</option>
+                      <option value="Public Toilet Issue">Public Toilet Issue</option>
+                      <option value="Tree Fallen">Tree Fallen</option>
+                      <option value="Illegal Dumping">Illegal Dumping</option>
                       <option value="Other">Other</option>
                     </select>
                   </div>

@@ -121,6 +121,10 @@ export default function WeeklyTrends() {
         'Garbage/Waste',
         'Water Leakage',
         'Damaged Public Property',
+        'Traffic Signal Issue',
+        'Public Toilet Issue',
+        'Tree Fallen',
+        'Illegal Dumping',
         'Other'
       ];
 
@@ -160,6 +164,34 @@ export default function WeeklyTrends() {
           'Metal fence surrounding the public garden is bent.',
           'Graffiti covering the historic neighborhood welcome sign.'
         ],
+        'Traffic Signal Issue': [
+          'Traffic light is completely dead at the major crossroads, causing dangerous near-misses.',
+          'Green signal light bulb is burned out on the northbound lane.',
+          'Pedestrian crossing walk/don\'t walk sign is stuck and not functioning.',
+          'Traffic light controller box seems damaged and signals are blinking yellow indefinitely.',
+          'Signal timing is mismatched causing severe gridlocks during rush hours.'
+        ],
+        'Public Toilet Issue': [
+          'Municipal public toilet block has running water completely clogged and overflowing.',
+          'Severe lack of hygiene, garbage pileup, and non-functional locks in public toilet booths.',
+          'No water supply or lighting inside the local public restrooms.',
+          'Broken sinks and leaking drainage pipe in the community toilets.',
+          'Public restroom door broken off its hinges, needs urgent carpentry.'
+        ],
+        'Tree Fallen': [
+          'Large old banyan tree branch snapped and is blocking two lanes of traffic.',
+          'Heavy tree has collapsed across the road during overnight wind, pulling down overhead cables.',
+          'Fallen tree branch resting on public power lines, posing a massive electrical hazard.',
+          'Overturned dead tree blocking the entrance of the public municipal park.',
+          'Broken tree limb hanging precariously over a busy sidewalk lane.'
+        ],
+        'Illegal Dumping': [
+          'Commercial chemical barrels and tires dumped illegally in the vacant plot.',
+          'Industrial waste pile dumped overnight along the riverbank path.',
+          'Huge heap of construction debris and broken bricks dumped on a pedestrian green belt.',
+          'Truck observed dumping bulk electronic waste in the residential corner alley.',
+          'Illegal dumping of rotting fish boxes and food waste causing intense putrid odor.'
+        ],
         'Other': [
           'Overgrown tree branches completely blocking the stop sign.',
           'Construction signs left behind after work was finished.',
@@ -175,6 +207,10 @@ export default function WeeklyTrends() {
         'Garbage/Waste': 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=600&q=80',
         'Water Leakage': 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=600&q=80',
         'Damaged Public Property': 'https://images.unsplash.com/photo-1599740831119-4727fdf22295?auto=format&fit=crop&w=600&q=80',
+        'Traffic Signal Issue': 'https://images.unsplash.com/photo-1508349937151-22b68b72d5b1?auto=format&fit=crop&w=600&q=80',
+        'Public Toilet Issue': 'https://images.unsplash.com/photo-1595856417561-20418456c507?auto=format&fit=crop&w=600&q=80',
+        'Tree Fallen': 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=600&q=80',
+        'Illegal Dumping': 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=600&q=80',
         'Other': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80'
       };
 
@@ -407,6 +443,10 @@ export default function WeeklyTrends() {
                     <option value="Garbage/Waste">Garbage & Waste</option>
                     <option value="Water Leakage">Water Leakages</option>
                     <option value="Damaged Public Property">Public Property</option>
+                    <option value="Traffic Signal Issue">Traffic Signals</option>
+                    <option value="Public Toilet Issue">Public Toilets</option>
+                    <option value="Tree Fallen">Fallen Trees</option>
+                    <option value="Illegal Dumping">Illegal Dumping</option>
                     <option value="Other">Other</option>
                   </select>
                   <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500 text-[9px]">▼</div>

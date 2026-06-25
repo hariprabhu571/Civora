@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, increment, arrayUnion } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, increment, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import { safeLocalStorage } from './lib/storage';
 import { CivicReport, ReportStatus } from './types';
@@ -553,11 +553,124 @@ export default function App() {
                           <Sparkles size={11} className="text-violet-400 animate-pulse" />
                           <span className="text-gradient-cool">AI Generated Grievance Letter</span>
                         </span>
-                        <div className="glass gradient-border rounded-2xl p-4 text-[11px] text-slate-200 font-mono leading-relaxed select-text shadow-inner max-h-[160px] overflow-y-auto">
+                        <div className="glass gradient-border rounded-2xl p-4 text-[11px] text-slate-200 font-mono leading-relaxed select-text shadow-inner max-h-[160px] overflow-y-auto whitespace-pre-wrap">
                           {selectedReportDetails.formal_complaint_text}
                         </div>
                       </div>
                     </div>
+
+                    {/* Citizen Feedback Component */}
+                    {selectedReportDetails.status === 'Resolved' && (
+                      <div id="citizen-feedback-panel" className="border-t border-white/5 pt-4 mt-4 shrink-0">
+                        <span className="text-[9px] uppercase font-black tracking-wider flex items-center gap-1 mb-2 text-violet-400">
+                          <MessageSquare size={11} className="text-violet-400" />
+                          Citizen Verification
+                        </span>
+                        
+                        {selectedReportDetails.citizenFeedback ? (
+                          <div className="glass gradient-border rounded-xl p-3.5 space-y-3">
+                            <p className="text-[11px] text-slate-300 font-medium">
+                              Was this issue actually fixed?
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-violet-500/20 text-violet-300">
+                                Answer: {selectedReportDetails.citizenFeedback}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-bold">
+                                {selectedReportDetails.citizenFeedback === 'No' ? '🔴 Unresolved' : '🟢 Feedback recorded'}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 italic leading-relaxed">
+                              Thank you for helping us keep our community records accurate!
+                            </p>
+                            
+                            {selectedReportDetails.citizenFeedback === 'No' && (
+                              <div className="pt-2.5 border-t border-white/5">
+                                <p className="text-[10px] text-slate-400 mb-2">
+                                  Since the issue was not resolved, you can reopen it:
+                                </p>
+                                <button
+                                  id="reopen-issue-btn"
+                                  onClick={async () => {
+                                    try {
+                                      const docRef = doc(db, 'reports', selectedReportDetails.id);
+                                      await updateDoc(docRef, {
+                                        status: 'Reported',
+                                        reopenedAt: serverTimestamp()
+                                      });
+                                      showToast('Incident reopened successfully and sent back to dispatch queue.', 'success');
+                                    } catch (err: any) {
+                                      console.error('Failed to reopen:', err);
+                                      showToast('Reopen failed: ' + err.message, 'info');
+                                    }
+                                  }}
+                                  className="w-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 hover:border-rose-500/50 text-rose-300 text-xs py-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                  <AlertOctagon size={13} className="animate-pulse" />
+                                  Reopen Issue
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="glass gradient-border rounded-xl p-4 space-y-3">
+                            <p className="text-[11px] text-slate-200 font-bold">
+                              Was this issue actually fixed?
+                            </p>
+                            <div className="grid grid-cols-3 gap-2">
+                              <button
+                                id="feedback-yes-btn"
+                                onClick={async () => {
+                                  try {
+                                    const docRef = doc(db, 'reports', selectedReportDetails.id);
+                                    await updateDoc(docRef, { citizenFeedback: 'Yes' });
+                                    showToast('Thank you for verifying! Feedback recorded.', 'success');
+                                  } catch (err: any) {
+                                    console.error(err);
+                                    showToast('Failed to submit feedback: ' + err.message, 'info');
+                                  }
+                                }}
+                                className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-300 text-[11px] py-2 rounded-lg font-extrabold transition cursor-pointer text-center select-none"
+                              >
+                                Yes
+                              </button>
+                              <button
+                                id="feedback-partially-btn"
+                                onClick={async () => {
+                                  try {
+                                    const docRef = doc(db, 'reports', selectedReportDetails.id);
+                                    await updateDoc(docRef, { citizenFeedback: 'Partially' });
+                                    showToast('Thank you for verifying! Feedback recorded.', 'success');
+                                  } catch (err: any) {
+                                    console.error(err);
+                                    showToast('Failed to submit feedback: ' + err.message, 'info');
+                                  }
+                                }}
+                                className="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-300 text-[11px] py-2 rounded-lg font-extrabold transition cursor-pointer text-center select-none"
+                              >
+                                Partially
+                              </button>
+                              <button
+                                id="feedback-no-btn"
+                                onClick={async () => {
+                                  try {
+                                    const docRef = doc(db, 'reports', selectedReportDetails.id);
+                                    await updateDoc(docRef, { citizenFeedback: 'No' });
+                                    showToast('Feedback submitted. You can now choose to reopen this issue.', 'info');
+                                  } catch (err: any) {
+                                    console.error(err);
+                                    showToast('Failed to submit feedback: ' + err.message, 'info');
+                                  }
+                                }}
+                                className="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/40 text-rose-300 text-[11px] py-2 rounded-lg font-extrabold transition cursor-pointer text-center select-none"
+                              >
+                                No
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Support Signatures box */}
                     <div id="vote-box" className="mt-auto pt-4 border-t border-white/5 space-y-3 shrink-0">

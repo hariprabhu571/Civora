@@ -40,6 +40,22 @@ const CATEGORY_META: Record<string, { avgTime: string; impactText: string }> = {
     avgTime: '4-7 days',
     impactText: 'prompted repair planning for shared local assets'
   },
+  'Traffic Signal Issue': {
+    avgTime: '1-2 days',
+    impactText: 'raised awareness to repair critical traffic regulators for road safety'
+  },
+  'Public Toilet Issue': {
+    avgTime: '2-3 days',
+    impactText: 'prompted sanitation review to improve public hygiene facilities'
+  },
+  'Tree Fallen': {
+    avgTime: '1-2 days',
+    impactText: 'alerted emergency clearance services to remove road obstructions'
+  },
+  'Illegal Dumping': {
+    avgTime: '2-4 days',
+    impactText: 'reported unlawful waste accumulation for strict anti-litter enforcement'
+  },
   'Other': {
     avgTime: '3-5 days',
     impactText: 'alerted municipal services to a critical neighborhood issue'
