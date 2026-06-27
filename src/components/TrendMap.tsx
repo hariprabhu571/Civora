@@ -159,15 +159,15 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
       fadeAnimation: true
     }).setView(mapCenter, 12);
 
-    // Dark Matter tile layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    // CartoDB Voyager — colorful light map tiles showing blue water, green forests, and colored roads
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 20
     }).addTo(map);
 
-    // Zoom buttons in bottom right
+    // Zoom buttons in top right
     L.control.zoom({
-      position: 'bottomright'
+      position: 'topright'
     }).addTo(map);
 
     mapInstanceRef.current = map;

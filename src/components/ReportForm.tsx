@@ -26,9 +26,10 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
 interface ReportFormProps {
   onBackToMap: () => void;
   onSuccess: (reportId: string, isConfirmation: boolean) => void;
+  defaultCoordinates?: LocationCoordinates | null;
 }
 
-export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) {
+export default function ReportForm({ onBackToMap, onSuccess, defaultCoordinates }: ReportFormProps) {
   // Current Form Stage
   // 'collect' -> 'analyzing' -> 'review' -> 'duplicate_screening' -> 'submitting'
   const [stage, setStage] = useState<'collect' | 'analyzing' | 'review' | 'submitting'>('collect');
@@ -47,7 +48,9 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
   const recognitionRef = useRef<any>(null);
 
   // Address and Location Coordinates
-  const [coordinates, setCoordinates] = useState<LocationCoordinates>({ lat: 37.7749, lng: -122.4194 }); // SF Default
+  const [coordinates, setCoordinates] = useState<LocationCoordinates>(
+    defaultCoordinates || { lat: 37.7749, lng: -122.4194 }
+  );
   const [locating, setLocating] = useState<boolean>(false);
 
   // Gemini AI Analysis Review Data
@@ -76,10 +79,12 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Web Geolocation Capture on mount
+  // Web Geolocation Capture on mount if defaultCoordinates not provided
   useEffect(() => {
-    attemptGeolocation();
-  }, []);
+    if (!defaultCoordinates) {
+      attemptGeolocation();
+    }
+  }, [defaultCoordinates]);
 
   const attemptGeolocation = () => {
     try {

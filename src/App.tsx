@@ -9,6 +9,7 @@ import AdminPanel from './components/AdminPanel';
 import WeeklyTrends from './components/WeeklyTrends';
 import ReportImpact from './components/ReportImpact';
 import { motion, AnimatePresence } from 'motion/react';
+import { MapPin, Navigation, Compass, Loader2, List, X } from 'lucide-react';
 
 /* ─── role types ─────────────────────────────────────────────── */
 type UserRole = 'citizen' | 'staff' | null;
@@ -41,15 +42,22 @@ function CivoraLogo({ size = 34 }: { size?: number }) {
    LOGIN / AUTH GATE
    ════════════════════════════════════════════════════════════════ */
 function LoginScreen({ onEnter }: { onEnter: (role: UserRole) => void }) {
-  const [pin, setPin] = useState('');
-  const [pinError, setPinError] = useState(false);
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleStaffLogin = () => {
-    if (pin === '1234') {
+  const handleStaffLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim().toLowerCase() === 'staff@civora.gov' && password === 'staff123') {
+      try {
+        sessionStorage.setItem('civora_admin_unlocked', 'true');
+      } catch (err) {
+        console.warn('Session storage write failed', err);
+      }
       onEnter('staff');
     } else {
-      setPinError(true);
-      setTimeout(() => setPinError(false), 600);
+      setError('Invalid email ID or password. Please try again.');
     }
   };
 
@@ -129,59 +137,119 @@ function LoginScreen({ onEnter }: { onEnter: (role: UserRole) => void }) {
           </div>
           <p style={{ fontSize: 13, color: '#8A93A5', margin: '0 0 18px' }}>Access the Dispatch Command Panel and resolution tools.</p>
 
-          <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: '#3A4456', marginBottom: 7, letterSpacing: '0.01em' }}>Access PIN (hint: 1234)</label>
-          <div className={pinError ? 'animate-shake' : ''} style={{ display: 'flex', gap: 9, marginBottom: 18 }}>
-            {[0, 1, 2, 3].map(i => (
-              <div
-                key={i}
-                style={{
-                  flex: 1, height: 50, borderRadius: 11,
-                  border: `${i === pin.length - 1 ? '2px solid #244BD6' : '1px solid #E3E7EF'}`,
-                  background: '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: "'IBM Plex Mono'", fontSize: 20, fontWeight: 600,
-                  boxShadow: i === pin.length - 1 ? '0 0 0 4px rgba(36,75,214,.12)' : 'none'
-                }}
-              >
-                {pin[i] ? '●' : ''}
-              </div>
-            ))}
-          </div>
-
-          {/* Number pad */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 18 }}>
-            {['1','2','3','4','5','6','7','8','9','⌫','0','✓'].map(k => (
-              <button
-                key={k}
-                onClick={() => {
-                  if (k === '⌫') setPin(p => p.slice(0, -1));
-                  else if (k === '✓') handleStaffLogin();
-                  else if (pin.length < 4) setPin(p => p + k);
-                }}
-                style={{
-                  height: 44, borderRadius: 10,
-                  border: '1px solid #E3E7EF',
-                  background: k === '✓' ? '#0F1A3D' : '#fff',
-                  color: k === '✓' ? '#fff' : '#131A2A',
-                  fontFamily: "'IBM Plex Mono'", fontWeight: 600, fontSize: 16,
-                  cursor: 'pointer'
-                }}
-              >
-                {k}
-              </button>
-            ))}
-          </div>
-
           <button
-            onClick={handleStaffLogin}
-            style={{ width: '100%', background: '#0F1A3D', color: '#fff', border: 'none', borderRadius: 11, padding: 14, fontFamily: "'IBM Plex Sans'", fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+            onClick={() => setIsStaffModalOpen(true)}
+            style={{ width: '100%', background: '#0F1A3D', color: '#fff', border: 'none', borderRadius: 11, padding: 15, fontFamily: "'IBM Plex Sans'", fontWeight: 600, fontSize: 14.5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}
             onMouseOver={e => (e.currentTarget.style.background = '#1B2A57')}
             onMouseOut={e => (e.currentTarget.style.background = '#0F1A3D')}
           >
-            Sign in to Dispatch Board
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#C2333A' }} />
+            Sign in as municipal staff
           </button>
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#9AA4B5', margin: '12px 0 0' }}>Verify credentials with email ID and password.</p>
         </div>
       </div>
+
+      {/* Staff Auth Dialog Box */}
+      <AnimatePresence>
+        {isStaffModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(15,26,61,.62)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, backdropFilter: 'blur(4px)' }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              style={{ width: '100%', maxWidth: 420, background: '#fff', borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 30px 80px -30px rgba(0,0,0,.5)' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #EEF1F6' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 18 }}>🔒</span>
+                  <h3 style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 18, margin: 0 }}>Staff Security Login</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsStaffModalOpen(false);
+                    setError('');
+                    setEmail('');
+                    setPassword('');
+                  }}
+                  style={{ width: 32, height: 32, borderRadius: 9, border: '1px solid #E3E7EF', background: '#fff', color: '#8A93A5', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <form onSubmit={handleStaffLogin} style={{ padding: 24 }}>
+                <p style={{ fontSize: 13, color: '#5A6478', margin: '0 0 20px', lineHeight: 1.5 }}>
+                  Please verify your credentials to access the restricted municipal dispatcher panel.
+                </p>
+
+                {error && (
+                  <div style={{ background: '#FDECEC', border: '1px solid #F8C6C8', color: '#C2333A', padding: '10px 14px', borderRadius: 9, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                    <span>⚠️</span>
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: '#3A4456', marginBottom: 7, letterSpacing: '0.01em' }}>Mail ID / Email Address</label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#8A93A5', fontSize: 16 }}>✉️</span>
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. staff@civora.gov"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      style={{ width: '100%', height: 46, borderRadius: 11, border: '1px solid #E3E7EF', paddingLeft: 40, paddingRight: 14, fontSize: 14, color: '#131A2A', background: '#fff', outline: 'none' }}
+                      onFocus={(e) => e.currentTarget.style.borderColor = '#244BD6'}
+                      onBlur={(e) => e.currentTarget.style.borderColor = '#E3E7EF'}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: '#3A4456', marginBottom: 7, letterSpacing: '0.01em' }}>Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#8A93A5', fontSize: 16 }}>🔑</span>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Enter security password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      style={{ width: '100%', height: 46, borderRadius: 11, border: '1px solid #E3E7EF', paddingLeft: 40, paddingRight: 14, fontSize: 14, color: '#131A2A', background: '#fff', outline: 'none' }}
+                      onFocus={(e) => e.currentTarget.style.borderColor = '#244BD6'}
+                      onBlur={(e) => e.currentTarget.style.borderColor = '#E3E7EF'}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ background: '#F7F9FC', borderRadius: 9, padding: '10px 14px', fontSize: 11.5, color: '#6A7488', border: '1px solid #EEF1F6', marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontWeight: 600, color: '#3A4456' }}>Credential Hint:</span>
+                  <span>Mail ID: <strong style={{ color: '#244BD6' }}>staff@civora.gov</strong></span>
+                  <span>Password: <strong style={{ color: '#244BD6' }}>staff123</strong></span>
+                </div>
+
+                <button
+                  type="submit"
+                  style={{ width: '100%', background: '#0F1A3D', color: '#fff', border: 'none', borderRadius: 11, padding: 14, fontFamily: "'IBM Plex Sans'", fontWeight: 600, fontSize: 14.5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  onMouseOver={e => (e.currentTarget.style.background = '#1B2A57')}
+                  onMouseOut={e => (e.currentTarget.style.background = '#0F1A3D')}
+                >
+                  🔒 Sign In to Dispatch Board
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -201,6 +269,22 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType]       = useState<'success' | 'info'>('success');
   const previousStatusesRef = useRef<{ [id: string]: ReportStatus }>({});
+
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [locationModalOpen, setLocationModalOpen] = useState(true);
+  const [requestingLocation, setRequestingLocation] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport size (< 768px for 'md')
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Initialize userUuid
   useEffect(() => {
@@ -280,6 +364,113 @@ export default function App() {
     } catch (err: any) {
       showToast('Support submission failed: ' + err.message, 'info');
     }
+  };
+
+  const renderSidebarContent = (isMobile = false) => {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+        <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #EEF1F6' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <h2 style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 16, margin: 0 }}>District Incidents</h2>
+              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#8A93A5' }}>{reports.length} live</span>
+            </div>
+            {isMobile && (
+              <button
+                onClick={() => setMobileSidebarOpen(false)}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  border: '1px solid #E3E7EF',
+                  background: '#fff',
+                  color: '#8A93A5',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          <div style={{ marginTop: 12, display: 'flex', gap: 7 }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 7, background: '#F2F4F8', borderRadius: 9, padding: '8px 11px', fontSize: 12.5, color: '#8A93A5' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C3CCDA' }} /> Search incidents…
+            </div>
+          </div>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
+          {loading ? (
+            <div style={{ padding: '48px 16px', textAlign: 'center' }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #EAF0FF', borderTopColor: '#244BD6', animation: 'cvSpin 1s linear infinite', margin: '0 auto 16px' }} />
+              <p style={{ fontSize: 12, color: '#9AA4B5', fontWeight: 600, letterSpacing: '0.04em' }}>Loading reports…</p>
+            </div>
+          ) : reports.length === 0 ? (
+            <div style={{ padding: '32px 16px', textAlign: 'center', background: '#F7F9FC', borderRadius: 13, border: '1px dashed #CBD3E1', marginTop: 8 }}>
+              <div style={{ fontSize: 28, marginBottom: 10 }}>🗺️</div>
+              <p style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 14, margin: '0 0 6px' }}>All clear!</p>
+              <p style={{ fontSize: 12, color: '#8A93A5', lineHeight: 1.5 }}>Be the first to report a civic issue in your neighborhood.</p>
+              <button onClick={() => { setReportModalOpen(true); if (isMobile) setMobileSidebarOpen(false); }} style={{ marginTop: 12, fontSize: 12, fontWeight: 700, color: '#244BD6', background: 'none', border: 'none', cursor: 'pointer' }}>File a report →</button>
+            </div>
+          ) : (
+            <>
+              {userUuid && (
+                <ReportImpact
+                  reports={reports}
+                  userUuid={userUuid}
+                  onSelectReport={(id) => { setFocusedReportId(id); setSelectedReportId(null); if (isMobile) setMobileSidebarOpen(false); }}
+                />
+              )}
+              {reports.map(report => {
+                const sm = statusMeta(report.status);
+                const dateStr = report.timestamp?.seconds
+                  ? new Date(report.timestamp.seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                  : 'Just now';
+                const isSelected = selectedReportId === report.id;
+                return (
+                  <div
+                    id={`drawer-item-${report.id}`}
+                    key={report.id}
+                    onClick={() => {
+                      setSelectedReportId(report.id);
+                      setFocusedReportId(report.id);
+                      if (isMobile) setMobileSidebarOpen(false);
+                    }}
+                    className={`incident-card${isSelected ? ' incident-card-selected' : ''}`}
+                  >
+                    {/* Thumbnail */}
+                    <div style={{ width: 58, height: 58, flexShrink: 0, borderRadius: 9, background: '#EEF1F6', overflow: 'hidden', position: 'relative' }}>
+                      {report.photoUrl
+                        ? <img src={report.photoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} referrerPolicy="no-referrer" />
+                        : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#9AA4B5', fontWeight: 700, textTransform: 'uppercase' }}>No pic</div>
+                      }
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: 14 }}>{report.category}</span>
+                        <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 10, color: '#9AA4B5' }}>{dateStr}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#6A7488', fontStyle: 'italic', lineHeight: 1.4, margin: '3px 0 7px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        "{report.userNotes || 'No notes added.'}"
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999, background: sm.pillBg, color: sm.pillFg }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: sm.pillDot }} />{sm.pillLabel}
+                        </span>
+                        <span className="dept-tag">{report.responsible_department?.split(' ')[0]?.toUpperCase()}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const selectedReport = reports.find(r => r.id === selectedReportId);
@@ -390,101 +581,101 @@ export default function App() {
           <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
 
             {/* Left: incident list */}
-            <aside style={{ width: 360, flexShrink: 0, borderRight: '1px solid #E3E7EF', background: '#fff', display: 'flex', flexDirection: 'column', minHeight: 0 }} className="hidden lg:flex">
-              <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #EEF1F6' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                  <h2 style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 16, margin: 0 }}>District Incidents</h2>
-                  <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#8A93A5' }}>{reports.length} live</span>
-                </div>
-                <div style={{ marginTop: 12, display: 'flex', gap: 7 }}>
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 7, background: '#F2F4F8', borderRadius: 9, padding: '8px 11px', fontSize: 12.5, color: '#8A93A5' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C3CCDA' }} /> Search incidents…
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
-                {loading ? (
-                  <div style={{ padding: '48px 16px', textAlign: 'center' }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #EAF0FF', borderTopColor: '#244BD6', animation: 'cvSpin 1s linear infinite', margin: '0 auto 16px' }} />
-                    <p style={{ fontSize: 12, color: '#9AA4B5', fontWeight: 600, letterSpacing: '0.04em' }}>Loading reports…</p>
-                  </div>
-                ) : reports.length === 0 ? (
-                  <div style={{ padding: '32px 16px', textAlign: 'center', background: '#F7F9FC', borderRadius: 13, border: '1px dashed #CBD3E1', marginTop: 8 }}>
-                    <div style={{ fontSize: 28, marginBottom: 10 }}>🗺️</div>
-                    <p style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 14, margin: '0 0 6px' }}>All clear!</p>
-                    <p style={{ fontSize: 12, color: '#8A93A5', lineHeight: 1.5 }}>Be the first to report a civic issue in your neighborhood.</p>
-                    <button onClick={() => setReportModalOpen(true)} style={{ marginTop: 12, fontSize: 12, fontWeight: 700, color: '#244BD6', background: 'none', border: 'none', cursor: 'pointer' }}>File a report →</button>
-                  </div>
-                ) : (
-                  <>
-                    {userUuid && (
-                      <ReportImpact
-                        reports={reports}
-                        userUuid={userUuid}
-                        onSelectReport={(id) => { setFocusedReportId(id); setSelectedReportId(null); }}
-                      />
-                    )}
-                    {reports.map(report => {
-                      const sm = statusMeta(report.status);
-                      const dateStr = report.timestamp?.seconds
-                        ? new Date(report.timestamp.seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-                        : 'Just now';
-                      const isSelected = selectedReportId === report.id;
-                      return (
-                        <div
-                          id={`drawer-item-${report.id}`}
-                          key={report.id}
-                          onClick={() => { setSelectedReportId(report.id); setFocusedReportId(report.id); }}
-                          className={`incident-card${isSelected ? ' incident-card-selected' : ''}`}
-                        >
-                          {/* Thumbnail */}
-                          <div style={{ width: 58, height: 58, flexShrink: 0, borderRadius: 9, background: '#EEF1F6', overflow: 'hidden', position: 'relative' }}>
-                            {report.photoUrl
-                              ? <img src={report.photoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} referrerPolicy="no-referrer" />
-                              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#9AA4B5', fontWeight: 700, textTransform: 'uppercase' }}>No pic</div>
-                            }
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                              <span style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: 14 }}>{report.category}</span>
-                              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 10, color: '#9AA4B5' }}>{dateStr}</span>
-                            </div>
-                            <div style={{ fontSize: 12, color: '#6A7488', fontStyle: 'italic', lineHeight: 1.4, margin: '3px 0 7px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                              "{report.userNotes || 'No notes added.'}"
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999, background: sm.pillBg, color: sm.pillFg }}>
-                                <span style={{ width: 5, height: 5, borderRadius: '50%', background: sm.pillDot }} />{sm.pillLabel}
-                              </span>
-                              <span className="dept-tag">{report.responsible_department?.split(' ')[0]?.toUpperCase()}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </>
-                )}
-              </div>
+            <aside style={{ width: 360, flexShrink: 0, borderRight: '1px solid #E3E7EF', background: '#fff', minHeight: 0 }} className="hidden md:flex flex-col">
+              {renderSidebarContent(false)}
             </aside>
+
+            {/* Mobile collapsible sidebar drawer */}
+            <AnimatePresence>
+              {mobileSidebarOpen && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setMobileSidebarOpen(false)}
+                    style={{
+                      position: 'fixed',
+                      inset: 0,
+                      background: 'rgba(15, 26, 61, 0.4)',
+                      zIndex: 510,
+                      backdropFilter: 'blur(2px)'
+                    }}
+                    className="md:hidden"
+                  />
+                  <motion.aside
+                    initial={{ x: '-100%' }}
+                    animate={{ x: 0 }}
+                    exit={{ x: '-100%' }}
+                    transition={{ type: 'spring', damping: 28, stiffness: 240 }}
+                    style={{
+                      position: 'fixed',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: 310,
+                      zIndex: 520,
+                      background: '#fff',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      boxShadow: '20px 0 60px -20px rgba(15, 26, 61, 0.25)',
+                    }}
+                    className="md:hidden"
+                  >
+                    {renderSidebarContent(true)}
+                  </motion.aside>
+                </>
+              )}
+            </AnimatePresence>
 
             {/* Center: map */}
             <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
               <MapContainer
                 mode="view"
                 reports={reports}
-                center={mapFocusedReport?.location ? [mapFocusedReport.location.lat, mapFocusedReport.location.lng] : [37.7749, -122.4194]}
+                center={mapFocusedReport?.location ? [mapFocusedReport.location.lat, mapFocusedReport.location.lng] : (userLocation || [37.7749, -122.4194])}
                 selectedReportId={focusedReportId || selectedReportId}
                 onSelectReport={(id) => { setSelectedReportId(id); setFocusedReportId(id); }}
               />
+              {/* Floating list toggle on mobile */}
+              {isMobile && (
+                <button
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="md:hidden"
+                  style={{
+                    position: 'absolute',
+                    bottom: 20,
+                    left: 20,
+                    zIndex: 500,
+                    padding: '12px 18px',
+                    borderRadius: 999,
+                    background: '#fff',
+                    color: '#0F1A3D',
+                    border: '1px solid #E3E7EF',
+                    fontFamily: "'IBM Plex Sans', sans-serif",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 7,
+                    boxShadow: '0 8px 24px -6px rgba(15,26,61,0.12)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <List size={16} />
+                  <span>Incidents ({reports.length})</span>
+                </button>
+              )}
               {/* Floating report button on mobile */}
-              <button
-                onClick={() => setReportModalOpen(true)}
-                className="lg:hidden"
-                style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 500, width: 52, height: 52, borderRadius: '50%', background: '#244BD6', color: '#fff', border: 'none', fontSize: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px -8px rgba(36,75,214,.7)' }}
-              >
-                +
-              </button>
+              {isMobile && (
+                <button
+                  onClick={() => setReportModalOpen(true)}
+                  className="md:hidden"
+                  style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 500, width: 52, height: 52, borderRadius: '50%', background: '#244BD6', color: '#fff', border: 'none', fontSize: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px -8px rgba(36,75,214,.7)' }}
+                >
+                  +
+                </button>
+              )}
             </div>
 
             {/* Right: detail panel */}
@@ -495,8 +686,8 @@ export default function App() {
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: 400, opacity: 0 }}
                   transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-                  style={{ width: 400, flexShrink: 0, borderLeft: '1px solid #E3E7EF', background: '#fff', overflowY: 'auto', minHeight: 0, position: 'absolute', right: 0, top: 0, bottom: 0, zIndex: 50, boxShadow: '-20px 0 60px -20px rgba(0,0,0,.15)' }}
-                  className="lg:relative lg:shadow-none"
+                  style={{ width: 400, flexShrink: 0, minHeight: 0 }}
+                  className="absolute md:relative right-0 top-0 bottom-0 z-50 shadow-[-20px_0_60px_-20px_rgba(0,0,0,0.15)] md:shadow-none md:border-l border-[#E3E7EF] bg-white overflow-y-auto"
                 >
                   <DetailPanel
                     report={selectedReport}
@@ -571,9 +762,198 @@ export default function App() {
                   <ReportForm
                     onBackToMap={() => setReportModalOpen(false)}
                     onSuccess={handleReportSuccess}
+                    defaultCoordinates={userLocation ? { lat: userLocation[0], lng: userLocation[1] } : null}
                   />
                 </div>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Location Setup Modal */}
+      <AnimatePresence>
+        {locationModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 100,
+              background: 'rgba(15, 26, 61, 0.65)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 24,
+              backdropFilter: 'blur(6px)',
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              style={{
+                width: '100%',
+                maxWidth: 440,
+                background: '#fff',
+                borderRadius: 20,
+                overflow: 'hidden',
+                boxShadow: '0 30px 80px -20px rgba(0,0,0,0.4)',
+                border: '1px solid #E3E7EF',
+                padding: '32px 28px',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}
+            >
+              {/* Pulsing Visual Container */}
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  background: 'rgba(36, 75, 214, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 20,
+                  position: 'relative',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: -6,
+                    borderRadius: '50%',
+                    background: 'rgba(36, 75, 214, 0.03)',
+                    animation: 'cvPulse 3s ease-out infinite',
+                  }}
+                />
+                <Compass size={32} className="text-[#244BD6]" style={{ strokeWidth: 1.5 }} />
+              </div>
+
+              <h2
+                style={{
+                  fontFamily: "'Space Grotesk'",
+                  fontWeight: 700,
+                  fontSize: 22,
+                  color: '#0F1A3D',
+                  margin: '0 0 10px',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Center Map Around You?
+              </h2>
+              <p
+                style={{
+                  fontSize: 13.5,
+                  color: '#5A6478',
+                  lineHeight: 1.6,
+                  margin: '0 0 24px',
+                }}
+              >
+                Civora works best when we center the map around your current location so you can explore and report incidents in your immediate neighborhood.
+              </p>
+
+              {requestingLocation ? (
+                <div
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px 0',
+                    gap: 12,
+                  }}
+                >
+                  <Loader2 className="animate-spin text-[#244BD6]" size={28} />
+                  <span style={{ fontSize: 13, color: '#8A93A5', fontWeight: 500 }}>
+                    Requesting browser permission...
+                  </span>
+                </div>
+              ) : (
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <button
+                    onClick={async () => {
+                      if (!navigator.geolocation) {
+                        showToast('Geolocation is not supported by your browser.', 'info');
+                        setUserLocation([37.7749, -122.4194]);
+                        setLocationModalOpen(false);
+                        return;
+                      }
+                      setRequestingLocation(true);
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                          setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+                          setRequestingLocation(false);
+                          setLocationModalOpen(false);
+                          showToast('Location configured successfully!', 'success');
+                        },
+                        (err) => {
+                          console.warn('Geolocation capture failed:', err);
+                          setUserLocation([37.7749, -122.4194]);
+                          setRequestingLocation(false);
+                          setLocationModalOpen(false);
+                          showToast('Using default San Francisco neighborhood.', 'info');
+                        },
+                        { enableHighAccuracy: true, timeout: 8000 }
+                      );
+                    }}
+                    style={{
+                      width: '100%',
+                      background: '#244BD6',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 12,
+                      padding: '14px 18px',
+                      fontFamily: "'IBM Plex Sans'",
+                      fontWeight: 600,
+                      fontSize: 14.5,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      boxShadow: '0 10px 24px -10px rgba(36, 75, 214, 0.5)',
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.background = '#1E3FA5')}
+                    onMouseOut={(e) => (e.currentTarget.style.background = '#244BD6')}
+                  >
+                    <Navigation size={16} fill="currentColor" />
+                    Share My Location
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setUserLocation([37.7749, -122.4194]);
+                      setLocationModalOpen(false);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#8A93A5',
+                      fontFamily: "'IBM Plex Sans'",
+                      fontWeight: 500,
+                      fontSize: 13.5,
+                      cursor: 'pointer',
+                      marginTop: 10,
+                      textDecoration: 'underline',
+                      display: 'inline-block',
+                      width: 'fit-content',
+                      alignSelf: 'center',
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.color = '#5A6478')}
+                    onMouseOut={(e) => (e.currentTarget.style.color = '#8A93A5')}
+                  >
+                    Not interested to share location
+                  </button>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

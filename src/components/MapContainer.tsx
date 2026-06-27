@@ -82,13 +82,13 @@ export default function MapContainer({
       fadeAnimation: true
     }).setView(center, zoom);
 
-    // CartoDB Positron — clean light map tiles matching Civora design
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    // CartoDB Voyager — colorful light map tiles showing blue water, green forests, and colored roads
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 20
     }).addTo(map);
 
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    L.control.zoom({ position: 'topright' }).addTo(map);
 
     mapInstanceRef.current = map;
 
@@ -115,9 +115,17 @@ export default function MapContainer({
     const map = mapInstanceRef.current;
     const cur = map.getCenter();
     if (Math.abs(cur.lat - lat) > 0.0001 || Math.abs(cur.lng - lng) > 0.0001) {
-      map.setView([lat, lng], map.getZoom());
+      if (mode === 'view') {
+        map.flyTo([lat, lng], 16, {
+          animate: true,
+          duration: 1.5,
+          easeLinearity: 0.25
+        });
+      } else {
+        map.setView([lat, lng], map.getZoom());
+      }
     }
-  }, [lat, lng]);
+  }, [lat, lng, mode]);
 
   // SELECT mode — draggable pin
   useEffect(() => {
@@ -196,6 +204,17 @@ export default function MapContainer({
 
       marker.bindPopup(popupHtml, { minWidth: 260 });
 
+      marker.on('click', () => {
+        map.flyTo([report.location.lat, report.location.lng], 16, {
+          animate: true,
+          duration: 1.5,
+          easeLinearity: 0.25
+        });
+        if (onSelectReport) {
+          onSelectReport(report.id);
+        }
+      });
+
       marker.on('popupopen', () => {
         const btn = document.getElementById(`detail-btn-${report.id}`);
         if (btn && onSelectReport) {
@@ -209,14 +228,18 @@ export default function MapContainer({
       group.addLayer(marker);
 
       if (selectedReportId && report.id === selectedReportId) {
-        map.setView([report.location.lat, report.location.lng], 15);
+        map.flyTo([report.location.lat, report.location.lng], 16, {
+          animate: true,
+          duration: 1.5,
+          easeLinearity: 0.25
+        });
         setTimeout(() => {
           try {
             if (map && typeof map.hasLayer === 'function' && map.hasLayer(marker)) {
               marker.openPopup();
             }
           } catch (e) { /* ignore */ }
-        }, 300);
+        }, 1200);
       }
     });
   }, [mode, reports, selectedReportId, onSelectReport]);
