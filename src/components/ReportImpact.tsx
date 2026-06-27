@@ -107,43 +107,39 @@ export default function ReportImpact({ reports, userUuid, onSelectReport }: Repo
     <div 
       id="user-report-impact-card"
       onClick={() => onSelectReport(activeReport.id)}
-      className="group glass-card border border-violet-500/20 relative overflow-hidden bg-[#0a0f1d]/90 rounded-2xl p-4.5 mb-4 shadow-xl hover:shadow-violet-500/5 transition duration-300 cursor-pointer select-none"
+      style={{ background: 'linear-gradient(135deg, rgba(124,92,252,.06), rgba(34,184,207,.06))', border: '1px solid rgba(124,92,252,.2)', borderRadius: 13, padding: '14px 14px', marginBottom: 14, cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
     >
-      {/* Background Subtle Glows */}
-      <div className="absolute -top-12 -right-12 w-28 h-28 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" />
-      <div className="absolute -bottom-12 -left-12 w-28 h-28 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
-
       {/* Card Header */}
-      <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-white/5">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/20 to-cyan-500/20 border border-violet-500/30 flex items-center justify-center">
-            <Award size={14} className="text-violet-400 animate-pulse" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid rgba(124,92,252,.12)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 26, height: 26, borderRadius: 8, background: 'rgba(124,92,252,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Award size={13} style={{ color: '#7C5CFC' }} />
           </div>
           <div>
-            <span className="text-[9px] text-violet-400 uppercase font-black tracking-widest block leading-none">Your Feedback Loop</span>
-            <h4 className="text-[12px] font-black text-white mt-0.5 leading-none">Your Report Impact</h4>
+            <span style={{ fontSize: 9, color: '#6A4FD0', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em', display: 'block', lineHeight: 1 }}>Your Feedback Loop</span>
+            <h4 style={{ fontSize: 12, fontFamily: "'Space Grotesk'", fontWeight: 700, color: '#131A2A', margin: '2px 0 0', lineHeight: 1 }}>Your Report Impact</h4>
           </div>
         </div>
 
         {/* Carousel pagination */}
         {userReports.length > 1 && (
-          <div className="flex items-center gap-1.5 shrink-0 bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F2F4F8', padding: '4px 8px', borderRadius: 8, border: '1px solid #E3E7EF' }}>
             <button 
               id="prev-impact-report-btn"
               type="button"
               onClick={handlePrev}
-              className="text-slate-400 hover:text-white transition p-0.5 rounded hover:bg-white/5"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6A7488', display: 'flex', padding: 2 }}
             >
               <ChevronLeft size={13} />
             </button>
-            <span className="text-[9px] text-slate-300 font-bold font-mono">
+            <span style={{ fontSize: 9, color: '#6A7488', fontWeight: 700, fontFamily: "'IBM Plex Mono'" }}>
               {currentIndex + 1}/{userReports.length}
             </span>
             <button 
               id="next-impact-report-btn"
               type="button"
               onClick={handleNext}
-              className="text-slate-400 hover:text-white transition p-0.5 rounded hover:bg-white/5"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6A7488', display: 'flex', padding: 2 }}
             >
               <ChevronRight size={13} />
             </button>
@@ -151,7 +147,7 @@ export default function ReportImpact({ reports, userUuid, onSelectReport }: Repo
         )}
       </div>
 
-      {/* Card Body - Content Stack with AnimatePresence */}
+      {/* Card Body */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeReport.id}
@@ -159,54 +155,43 @@ export default function ReportImpact({ reports, userUuid, onSelectReport }: Repo
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -10 }}
           transition={{ duration: 0.2 }}
-          className="space-y-3"
         >
-          {/* List bullets containing status and impact info */}
-          <div className="space-y-2 text-[11px] leading-relaxed">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 11, lineHeight: 1.5 }}>
             
-            {/* Impact / Hotspot Bullet */}
-            <div className="flex items-start gap-2">
-              <span className="text-violet-400 font-bold shrink-0 mt-0.5">✦</span>
-              <p className="text-slate-200 font-medium">
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+              <span style={{ color: '#7C5CFC', fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✦</span>
+              <p style={{ color: '#4A5468', margin: 0 }}>
                 {isCreator ? 'Your' : 'Your backed'}{' '}
-                <span className="font-extrabold text-white">{activeReport.category.toLowerCase()}</span>{' '}
-                report (<span className="text-cyan-300 font-bold">{dateStr}</span>) {categoryInfo.impactText}.
+                <strong style={{ color: '#131A2A' }}>{activeReport.category.toLowerCase()}</strong>{' '}
+                report (<span style={{ color: '#244BD6', fontWeight: 600 }}>{dateStr}</span>) {categoryInfo.impactText}.
               </p>
             </div>
 
-            {/* Status Bullet */}
-            <div className="flex items-start gap-2">
-              <span className="text-violet-400 font-bold shrink-0 mt-0.5">✦</span>
-              <p className="text-slate-200 font-medium">
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+              <span style={{ color: '#7C5CFC', fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✦</span>
+              <p style={{ color: '#4A5468', margin: 0 }}>
                 Status:{' '}
-                <span className={`font-extrabold ${
-                  activeReport.status === 'Resolved' ? 'text-emerald-400' :
-                  activeReport.status === 'Under Review' ? 'text-cyan-400' :
-                  'text-rose-400'
-                }`}>
+                <span style={{ fontWeight: 700, color: activeReport.status === 'Resolved' ? '#0F7A45' : activeReport.status === 'Under Review' ? '#9A6B00' : '#C2333A' }}>
                   {statusText}
                 </span>
               </p>
             </div>
 
-            {/* Resolution Time Bullet */}
-            <div className="flex items-start gap-2">
-              <span className="text-violet-400 font-bold shrink-0 mt-0.5">✦</span>
-              <p className="text-slate-300 font-medium">
-                Avg. resolution time for this category:{' '}
-                <span className="font-extrabold text-white">{categoryInfo.avgTime}</span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+              <span style={{ color: '#7C5CFC', fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✦</span>
+              <p style={{ color: '#4A5468', margin: 0 }}>
+                Avg. resolution time:{' '}
+                <strong style={{ color: '#131A2A' }}>{categoryInfo.avgTime}</strong>
               </p>
             </div>
 
           </div>
 
-          {/* Action indicator link */}
-          <div className="pt-1 flex items-center justify-between text-[9px] text-slate-400 group-hover:text-cyan-400 transition-colors">
-            <span className="flex items-center gap-1">
-              <MapPin size={10} className="text-slate-500 group-hover:text-cyan-400 transition-colors" />
-              Click card to pinpoint on interactive map
+          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 9, color: '#9AA4B5' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <MapPin size={10} /> Click to pinpoint on map
             </span>
-            <ChevronRight size={10} className="transform group-hover:translate-x-1 transition-transform" />
+            <ChevronRight size={10} />
           </div>
 
         </motion.div>

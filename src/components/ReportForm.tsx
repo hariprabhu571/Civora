@@ -546,43 +546,26 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
   ];
 
   return (
-    <div className="min-h-full py-4 px-4 md:px-8 font-sans">
-      <div id="form-container" className="max-w-4xl mx-auto glass-heavy rounded-3xl shadow-2xl overflow-hidden border border-white/10 flex flex-col min-h-[500px] gradient-border">
+    <div className="min-h-full font-sans">
+      <div id="form-container" className="max-w-4xl mx-auto overflow-hidden flex flex-col min-h-[500px]" style={{ background: '#fff' }}>
         
         {/* Multi-step progress indicator */}
-        <div className="px-6 md:px-8 pt-6 pb-2 animate-fade-in-up">
-          <div className="flex items-center justify-between relative">
+        <div style={{ padding: '16px 24px 12px', borderBottom: '1px solid #EEF1F6' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {progressSteps.map((step, idx) => (
               <React.Fragment key={step.label}>
-                {/* Step dot + label */}
-                <div className="flex flex-col items-center z-10 relative">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500 ${
-                      step.active || step.completed
-                        ? 'bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25'
-                        : 'bg-white/10 text-slate-500'
-                    }`}
-                  >
-                    {step.completed ? <Check size={14} /> : idx + 1}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600, color: step.active ? '#244BD6' : step.completed ? '#0F7A45' : '#9AA4B5' }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11,
+                    background: step.active ? '#244BD6' : step.completed ? '#E4F5EC' : '#F2F4F8',
+                    color: step.active ? '#fff' : step.completed ? '#0F7A45' : '#9AA4B5'
+                  }}>
+                    {step.completed ? '✓' : idx + 1}
                   </div>
-                  <span className={`text-[10px] font-semibold mt-1.5 tracking-wide ${
-                    step.active || step.completed ? 'text-violet-300' : 'text-slate-500'
-                  }`}>
-                    {step.label}
-                  </span>
+                  <span className="hidden sm:inline">{step.label}</span>
                 </div>
-                {/* Connecting line */}
                 {idx < progressSteps.length - 1 && (
-                  <div className="flex-1 h-[2px] mx-2 -mt-4 relative">
-                    <div className="absolute inset-0 bg-white/10 rounded-full" />
-                    <div
-                      className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
-                        step.completed
-                          ? 'w-full bg-gradient-to-r from-violet-500 to-cyan-500'
-                          : 'w-0'
-                      }`}
-                    />
-                  </div>
+                  <div style={{ flex: 1, height: 1, background: step.completed ? 'linear-gradient(90deg,#244BD6,#7C5CFC)' : '#E3E7EF', borderRadius: 2 }} />
                 )}
               </React.Fragment>
             ))}
@@ -590,17 +573,18 @@ export default function ReportForm({ onBackToMap, onSuccess }: ReportFormProps) 
         </div>
 
         {/* Dynamic header */}
-        <div id="form-header" className="py-5 px-6 md:px-8 text-white flex items-center justify-between relative">
-          <div className="relative">
-            <span className="text-[10px] uppercase tracking-widest font-extrabold bg-gradient-to-r from-violet-950/80 to-cyan-950/80 border border-violet-500/20 text-violet-300 px-3 py-1 rounded-full">Civora Citizen Dispatch</span>
-            <h2 className="text-xl md:text-2xl font-display font-bold tracking-tight mt-2.5 text-gradient-aurora">Report Civic Issue</h2>
+        <div id="form-header" className="py-4 px-6 md:px-8 flex items-center justify-between" style={{ borderBottom: '1px solid #EEF1F6', background: '#fff' }}>
+          <div>
+            <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A93A5', fontWeight: 600 }}>Civora Citizen Dispatch</div>
+            <h2 style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 20, margin: '4px 0 0', letterSpacing: '-0.01em', color: '#131A2A' }}>Report Civic Issue</h2>
           </div>
           <button 
             id="close-report-btn"
             onClick={onBackToMap}
-            className="text-xs font-bold uppercase tracking-wider glass hover:border-violet-500/30 px-4 py-2 border border-white/10 rounded-xl transition duration-150 cursor-pointer text-slate-300"
+            className="btn-secondary"
+            style={{ fontSize: 12 }}
           >
-            Cancel
+            ✕ Cancel
           </button>
         </div>
 

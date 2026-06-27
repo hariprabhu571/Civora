@@ -468,7 +468,7 @@ export default function AdminPanel() {
 
   if (!isUnlocked) {
     return (
-      <div className="bg-[#05070c] min-h-[85vh] font-sans relative flex items-center justify-center p-4">
+      <div className="min-h-[85vh] font-sans relative flex items-center justify-center p-4" style={{ background: '#EDF0F5' }}>
         {/* Decorative aurora orbs */}
         <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-violet-500/10 rounded-full blur-[120px] pointer-events-none animate-glow-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none animate-glow-pulse delay-200" />
@@ -614,26 +614,25 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="bg-transparent min-h-screen font-sans relative pb-12">
+    <div className="min-h-screen font-sans relative pb-12" style={{ background: '#EDF0F5' }}>
       {/* Dynamic Non-blocking alert notice banner */}
       {adminNotice && (
-        <div className={`glass-heavy fixed top-6 right-6 z-[9999] max-w-md p-4.5 rounded-2xl shadow-2xl text-xs font-semibold flex items-start gap-3.5 animate-fade-in-up ${
-          adminNotice.type === 'error' ? 'border-l-2 border-l-rose-400' :
-          adminNotice.type === 'success' ? 'border-l-2 border-l-emerald-400' :
-          'border-l-2 border-l-violet-400'
-        }`}>
-          <span className="text-[15px] leading-none">{adminNotice.type === 'error' ? '⚠️' : adminNotice.type === 'success' ? '✅' : 'ℹ️'}</span>
-          <div className={`flex-1 leading-relaxed ${
-            adminNotice.type === 'error' ? 'text-rose-200' :
-            adminNotice.type === 'success' ? 'text-emerald-300' :
-            'text-violet-300'
-          }`}>{adminNotice.message}</div>
-          <button className="text-[14px] leading-none font-bold hover:opacity-75 p-1 hover:bg-white/10 rounded cursor-pointer text-slate-400 hover:text-white transition" onClick={() => setAdminNotice(null)}>×</button>
+        <div
+          className="toast-bar"
+          style={{
+            position: 'fixed', top: 24, right: 24, left: 'auto', transform: 'none', zIndex: 9999,
+            display: 'flex', alignItems: 'flex-start', padding: '14px 16px', gap: 12,
+            borderLeft: adminNotice.type === 'error' ? '3px solid #C2333A' : adminNotice.type === 'success' ? '3px solid #15A05A' : '3px solid #244BD6'
+          }}
+        >
+          <span style={{ fontSize: 15 }}>{adminNotice.type === 'error' ? '⚠️' : adminNotice.type === 'success' ? '✅' : 'ℹ️'}</span>
+          <div style={{ flex: 1, fontSize: 13, color: '#131A2A', lineHeight: 1.45 }}>{adminNotice.message}</div>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#8A93A5', padding: '2px 4px', lineHeight: 1 }} onClick={() => setAdminNotice(null)}>×</button>
         </div>
       )}
 
       {/* Banner / stats */}
-      <div id="admin-header" className="glass-heavy text-white py-10 px-6 md:px-12 border-b border-white/5 relative overflow-hidden">
+      <div id="admin-header" className="py-8 px-6 md:px-12 border-b relative overflow-hidden" style={{ background: '#0F1A3D', color: '#fff', borderColor: 'rgba(255,255,255,0.1)' }}>
         {/* Aurora decorative orbs */}
         <div className="absolute -top-20 -left-20 w-72 h-72 bg-violet-500/15 rounded-full blur-[100px] pointer-events-none animate-glow-pulse" />
         <div className="absolute -bottom-16 right-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none animate-glow-pulse delay-200" />
@@ -643,36 +642,23 @@ export default function AdminPanel() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative">
           <div>
             <span className="text-[10px] uppercase font-black tracking-widest text-violet-300 bg-gradient-to-r from-violet-950/80 to-cyan-950/80 border border-violet-500/20 px-3 py-1 rounded-full inline-block">Dispatch Command Panel</span>
-            <h1 className="text-2xl md:text-3xl text-gradient-aurora font-display font-bold tracking-tight mt-3">Grievance Dashboard</h1>
-            <p className="text-slate-400 text-sm mt-2 max-w-xl leading-relaxed">Review cataloged community incidents, authorize municipal work orders, and coordinate department responses in real-time.</p>
+            <h1 className="text-2xl md:text-3xl font-display font-bold tracking-tight mt-3" style={{ color: '#fff' }}>Dispatch Command Panel</h1>
+            <p className="text-sm mt-2 max-w-xl leading-relaxed" style={{ color: '#B7C2E4' }}>Review cataloged community incidents, authorize municipal work orders, and coordinate department responses in real-time.</p>
           </div>
           
           {/* Quick Counter widgets */}
-          <div className="grid grid-cols-3 gap-3 max-w-sm w-full">
-            <div className="glass-card rounded-2xl p-4 text-center">
-              <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-gradient-to-br from-violet-500/20 to-cyan-500/20 flex items-center justify-center">
-                <Layers size={14} className="text-violet-400" />
-              </div>
-              <span className="block text-2xl font-black text-white animate-count-up">{reports.length}</span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-400 font-extrabold block mt-0.5">Total</span>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '12px 18px', textAlign: 'center', minWidth: 76, border: '1px solid rgba(255,255,255,.15)' }}>
+              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24, color: '#fff' }}>{reports.length}</div>
+              <div style={{ fontSize: 9, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#9FB0E6', fontWeight: 600 }}>Total</div>
             </div>
-            <div className="glass-card rounded-2xl p-4 text-center">
-              <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-gradient-to-br from-rose-500/20 to-rose-600/10 flex items-center justify-center">
-                <AlertCircle size={14} className="text-rose-400" />
-              </div>
-              <span className="block text-2xl font-black text-rose-400 animate-count-up">
-                {reports.filter(r => r.status === 'Reported').length}
-              </span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-400 font-extrabold block mt-0.5">New</span>
+            <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '12px 18px', textAlign: 'center', minWidth: 76, border: '1px solid rgba(255,255,255,.15)' }}>
+              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24, color: '#FF8A8F' }}>{reports.filter(r => r.status === 'Reported').length}</div>
+              <div style={{ fontSize: 9, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#9FB0E6', fontWeight: 600 }}>New</div>
             </div>
-            <div className="glass-card rounded-2xl p-4 text-center">
-              <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 flex items-center justify-center">
-                <CheckCircle2 size={14} className="text-emerald-400" />
-              </div>
-              <span className="block text-2xl font-black text-emerald-400 animate-count-up">
-                {reports.filter(r => r.status === 'Resolved').length}
-              </span>
-              <span className="text-[9px] uppercase tracking-widest text-slate-400 font-extrabold block mt-0.5">Resolved</span>
+            <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '12px 18px', textAlign: 'center', minWidth: 76, border: '1px solid rgba(255,255,255,.15)' }}>
+              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24, color: '#5ECFA0' }}>{reports.filter(r => r.status === 'Resolved').length}</div>
+              <div style={{ fontSize: 9, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#9FB0E6', fontWeight: 600 }}>Resolved</div>
             </div>
           </div>
         </div>
@@ -694,7 +680,8 @@ export default function AdminPanel() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Query department, keywords, category or ticket text..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs glass-card text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/30 transition duration-150"
+                  className="civic-input"
+                  style={{ paddingLeft: 40, fontSize: 13 }}
                 />
               </div>
 
@@ -705,7 +692,7 @@ export default function AdminPanel() {
                   id="status-filter"
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="glass px-3 py-2.5 rounded-xl text-sm text-white font-bold flex-1 md:flex-none cursor-pointer outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/30 transition"
+                  style={{ background: '#fff', border: '1px solid #E3E7EF', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#3A4456', cursor: 'pointer', outline: 'none' }}
                 >
                   <option value="All">All Statuses</option>
                   <option value="Reported">Reported</option>
@@ -717,7 +704,7 @@ export default function AdminPanel() {
                   id="category-filter"
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="glass px-3 py-2.5 rounded-xl text-sm text-white font-bold flex-1 md:flex-none cursor-pointer outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/30 transition"
+                  style={{ background: '#fff', border: '1px solid #E3E7EF', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#3A4456', cursor: 'pointer', outline: 'none' }}
                 >
                   <option value="All">All Categories</option>
                   <option value="Pothole">Pothole</option>
@@ -770,15 +757,15 @@ export default function AdminPanel() {
                       id={`list-item-${report.id}`}
                       key={report.id}
                       onClick={() => setSelectedReport(report)}
-                      className={`group glass-card p-4 rounded-2xl transition-all duration-300 cursor-pointer flex items-center gap-4.5 ${selectedReport?.id === report.id ? 'ring-1 ring-violet-500/40 bg-violet-500/5 shadow-lg shadow-violet-500/10' : 'hover:shadow-2xl'}`}
+                      className={`group dispatch-row ${selectedReport?.id === report.id ? 'civic-card-active' : 'civic-card'}`}
                     >
                       {/* Avatar/Image */}
                       {report.photoUrl ? (
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-950 flex-shrink-0 border border-white/5 group-hover:border-violet-500/20 transition-colors duration-300">
+                        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border" style={{ background: '#F2F4F8', borderColor: '#E3E7EF' }}>
                           <img src={report.photoUrl} className="w-full h-full object-cover group-hover:scale-105 transition duration-355" referrerPolicy="no-referrer" />
                         </div>
                       ) : (
-                        <div className="w-16 h-16 bg-gradient-to-br from-violet-500/10 to-cyan-500/10 rounded-xl flex items-center justify-center flex-shrink-0 border border-white/5 text-slate-400 group-hover:border-violet-500/20 transition-colors duration-300">
+                        <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 border" style={{ background: '#F2F4F8', borderColor: '#E3E7EF', color: '#9AA4B5', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' }}>
                           <Layers size={20} />
                         </div>
                       )}
@@ -786,11 +773,11 @@ export default function AdminPanel() {
                       {/* Summary */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2.5 flex-wrap">
-                          <h3 className="font-display font-bold text-white text-[14px] leading-tight group-hover:text-violet-400 transition">{report.category}</h3>
-                          <span className="text-white/10 text-xs hidden sm:inline">|</span>
-                          <span className="text-[10px] text-slate-500 font-extrabold tracking-wide uppercase">{dateStr}</span>
+                          <h3 className="font-display font-bold text-[14px] leading-tight" style={{ color: '#131A2A' }}>{report.category}</h3>
+                          <span className="text-xs hidden sm:inline" style={{ color: '#E3E7EF' }}>|</span>
+                          <span className="text-[10px] font-extrabold tracking-wide uppercase" style={{ color: '#9AA4B5' }}>{dateStr}</span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1.5 line-clamp-1 italic leading-relaxed">
+                        <p className="text-xs mt-1.5 line-clamp-1 italic leading-relaxed" style={{ color: '#6A7488' }}>
                           "{report.userNotes || 'No notes description recorded. Read the formal text.'}"
                         </p>
                         
@@ -824,7 +811,7 @@ export default function AdminPanel() {
             <div className="sticky top-6 space-y-6">
               
               {/* Department Performance & Accountability Stats */}
-              <div id="department-accountability-stats" className="glass-heavy rounded-3xl shadow-2xl p-6 flex flex-col space-y-4.5 relative overflow-hidden">
+              <div id="department-accountability-stats" className="civic-card rounded-2xl p-5 flex flex-col space-y-4" style={{ overflow: 'hidden' }}>
                 {/* Decorative background glow */}
                 <div className="absolute -top-10 -right-10 w-24 h-24 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" />
                 
@@ -846,7 +833,7 @@ export default function AdminPanel() {
                       : 0;
 
                     return (
-                      <div key={dept} className="glass-card rounded-2xl p-4.5 space-y-3.5 border border-white/[0.02] hover:border-violet-500/10 transition-all duration-300">
+                      <div key={dept} className="civic-card rounded-xl p-4 space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <h4 className="text-[13px] font-bold text-slate-100 block leading-tight">{dept}</h4>
@@ -870,7 +857,7 @@ export default function AdminPanel() {
 
                         {/* Custom visual progress bar */}
                         {stats.total > 0 ? (
-                          <div className="h-2 w-full bg-slate-950/40 border border-white/5 rounded-full overflow-hidden flex shadow-inner">
+                          <div className="progress-bar">
                             <div 
                               style={{ width: `${(stats.openCount / stats.total) * 100}%` }} 
                               className="h-full bg-gradient-to-r from-rose-500 to-rose-600 transition-all duration-500" 
@@ -888,7 +875,7 @@ export default function AdminPanel() {
                             />
                           </div>
                         ) : (
-                          <div className="h-2 w-full bg-slate-950/20 border border-dashed border-white/5 rounded-full overflow-hidden flex items-center justify-center">
+                          <div className="progress-bar" style={{ justifyContent: 'center' }}>
                             <span className="text-[8px] text-slate-600 font-bold tracking-widest uppercase">No pending dispatches</span>
                           </div>
                         )}
@@ -915,7 +902,7 @@ export default function AdminPanel() {
               </div>
 
               {selectedReport ? (
-                <div id="inspector-card" className="glass-heavy rounded-3xl shadow-2xl p-6 flex flex-col space-y-5 animate-fade-in-up relative overflow-hidden">
+                <div id="inspector-card" className="civic-card rounded-2xl p-6 flex flex-col space-y-5 animate-fade-in-up" style={{ overflow: 'hidden' }}>
                   {/* Decorative aurora orbs */}
                   <div className="absolute top-0 right-0 w-40 h-40 bg-violet-500/8 rounded-full blur-3xl pointer-events-none animate-glow-pulse" />
                   <div className="absolute bottom-10 -left-10 w-32 h-32 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none animate-glow-pulse delay-300" />
@@ -1291,26 +1278,36 @@ export default function AdminPanel() {
 
                   {/* Transition operations board (Hides during active resolution capture to avoid confusion) */}
                   {!isCapturingResolution && (
-                    <div className="pt-4 border-t border-white/5 space-y-4 relative">
-                      <span className="text-[9px] uppercase tracking-widest text-slate-500 font-black block">Status dispatch controls</span>
+                    <div className="pt-4 space-y-3" style={{ borderTop: '1px solid #EEF1F6' }}>
+                      <span className="section-label">Status dispatch controls</span>
                       
                       <div className="flex gap-2 flex-wrap text-xs">
                         <button 
                           id="status-reported-btn"
                           onClick={() => updateReportStatus(selectedReport.id, 'Reported')}
                           disabled={selectedReport.status === 'Reported'}
-                          className={`flex-1 py-2.5 rounded-xl font-bold transition-all cursor-pointer ${selectedReport.status === 'Reported' ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white cursor-not-allowed opacity-70' : 'glass hover:bg-rose-500/10 hover:border-rose-500/20 text-rose-400 active:scale-95'}`}
+                          style={{
+                            flex: 1, padding: '9px', borderRadius: 9, fontWeight: 600, cursor: selectedReport.status === 'Reported' ? 'not-allowed' : 'pointer', fontFamily: "'IBM Plex Sans'",
+                            background: selectedReport.status === 'Reported' ? '#FDECEC' : '#fff',
+                            color: selectedReport.status === 'Reported' ? '#C2333A' : '#8A93A5',
+                            border: `1px solid ${selectedReport.status === 'Reported' ? '#F3D2D3' : '#E3E7EF'}`
+                          }}
                         >
-                          Reported
+                          Set Reported
                         </button>
 
                         <button 
                           id="status-review-btn"
                           onClick={() => updateReportStatus(selectedReport.id, 'Under Review')}
                           disabled={selectedReport.status === 'Under Review'}
-                          className={`flex-1 py-2.5 rounded-xl font-bold transition-all cursor-pointer ${selectedReport.status === 'Under Review' ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white cursor-not-allowed opacity-70' : 'glass hover:bg-cyan-500/10 hover:border-cyan-500/20 text-cyan-400 active:scale-95'}`}
+                          style={{
+                            flex: 1, padding: '9px', borderRadius: 9, fontWeight: 700, cursor: selectedReport.status === 'Under Review' ? 'not-allowed' : 'pointer', fontFamily: "'IBM Plex Sans'",
+                            background: selectedReport.status === 'Under Review' ? '#E8A317' : '#fff',
+                            color: selectedReport.status === 'Under Review' ? '#fff' : '#8A93A5',
+                            border: `1px solid ${selectedReport.status === 'Under Review' ? '#E8A317' : '#E3E7EF'}`
+                          }}
                         >
-                          In Review
+                          Under Review
                         </button>
 
                         <button 
@@ -1323,25 +1320,30 @@ export default function AdminPanel() {
                             setGpsError(null);
                           }}
                           disabled={selectedReport.status === 'Resolved'}
-                          className={`flex-1 py-2.5 rounded-xl font-bold transition-all cursor-pointer ${selectedReport.status === 'Resolved' ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white cursor-not-allowed opacity-70' : 'glass hover:bg-emerald-500/10 hover:border-emerald-500/20 text-emerald-400 active:scale-95'}`}
+                          style={{
+                            flex: 1, padding: '9px', borderRadius: 9, fontWeight: 600, cursor: selectedReport.status === 'Resolved' ? 'not-allowed' : 'pointer', fontFamily: "'IBM Plex Sans'",
+                            background: selectedReport.status === 'Resolved' ? '#E4F5EC' : '#fff',
+                            color: selectedReport.status === 'Resolved' ? '#0F7A45' : '#8A93A5',
+                            border: `1px solid ${selectedReport.status === 'Resolved' ? '#C9EAD6' : '#E3E7EF'}`
+                          }}
                         >
-                          Verify & Resolve
+                          Set Resolved
                         </button>
                       </div>
 
                       <button 
                         id="admin-delete-btn"
                         onClick={() => handleDeleteReport(selectedReport.id)}
-                        className="w-full py-3 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white rounded-xl text-xs font-bold font-display shadow-lg shadow-rose-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="btn-danger w-full flex items-center justify-center gap-1.5"
                       >
-                        <Trash2 size={13} /> Purge Public File
+                        <Trash2 size={13} /> Remove Report
                       </button>
                     </div>
                   )}
 
                 </div>
               ) : (
-                <div id="inspector-placeholder" className="glass-heavy rounded-3xl shadow-2xl p-8 text-center space-y-3.5">
+                <div id="inspector-placeholder" className="civic-card rounded-2xl p-8 text-center space-y-4">
                   <div className="w-14 h-14 bg-gradient-to-br from-violet-500/15 to-cyan-500/15 border border-violet-500/10 rounded-2xl flex items-center justify-center mx-auto text-violet-400 shadow-inner">
                     <Eye size={22} />
                   </div>

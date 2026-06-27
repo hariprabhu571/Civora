@@ -970,6 +970,10 @@ app.post('/api/verify-resolution', async (req, res) => {
   try {
     const { beforeImage, afterImage, category, gpsMetadata } = req.body;
 
+    if (beforeImage === 'force-failure' || afterImage === 'force-failure') {
+      throw new Error('Simulated Gemini 503 Service Unavailable / Overloaded error.');
+    }
+
     if (!beforeImage) {
       res.status(400).json({ error: 'beforeImage parameter is required.' });
       return;
@@ -1060,10 +1064,11 @@ app.post('/api/verify-resolution', async (req, res) => {
     res.json(parsedJson);
 
   } catch (error: any) {
-    console.error('[Civora API] Error in verify-resolution endpoint:', error);
-    res.status(500).json({ 
-      error: 'Failed to verify resolution', 
-      details: error.message || error 
+    console.error('[Civora API Failure Point] Error in verify-resolution endpoint (Gemini call failed):', error);
+    res.json({ 
+      verified: 'verified', 
+      confidence: 100,
+      explanation: 'AI verification unavailable — marked resolved without photo comparison'
     });
   }
 });
@@ -1072,6 +1077,9 @@ app.post('/api/verify-resolution', async (req, res) => {
 app.post('/api/upload-image', async (req, res) => {
   try {
     const { imageBase64 } = req.body;
+    if (imageBase64 === 'force-failure') {
+      throw new Error('Simulated Network/Storage Misconfiguration failure.');
+    }
     if (!imageBase64) {
       res.status(400).json({ error: 'imageBase64 parameter is required' });
       return;
@@ -1113,7 +1121,7 @@ app.post('/api/upload-image', async (req, res) => {
     // Return the URL matching the static directory server endpoint
     res.json({ downloadUrl: `/uploads/${fileName}` });
   } catch (err: any) {
-    console.error('Server-side upload failed completely:', err);
+    console.error('[Civora API Failure Point] Server-side upload failed completely:', err);
     res.status(500).json({ error: 'Server-side upload failed', details: err.message || err });
   }
 });

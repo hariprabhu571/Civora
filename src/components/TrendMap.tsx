@@ -75,39 +75,25 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
 
   // Custom marker icon depending on status & severity level
   const getStatusIcon = (status: string, severity: string) => {
-    let color = '#f43f5e'; // Red for Reported
-    let shadowColor = 'rgba(244, 63, 94, 0.4)';
-    if (status === 'Resolved') {
-      color = '#10b981'; // Green
-      shadowColor = 'rgba(16, 185, 129, 0.4)';
-    } else if (status === 'Under Review') {
-      color = '#f59e0b'; // Yellow
-      shadowColor = 'rgba(245, 158, 11, 0.4)';
-    }
+    let color = '#E5484D'; // Red for Reported
+    if (status === 'Resolved') color = '#15A05A';
+    else if (status === 'Under Review') color = '#E8A317';
 
-    let size = 28;
-    if (severity === 'High') {
-      size = 36;
-    } else if (severity === 'Low') {
-      size = 20;
-    }
+    let size = 20;
+    if (severity === 'High') size = 24;
+    else if (severity === 'Low') size = 16;
 
     return L.divIcon({
       className: 'custom-status-marker',
       html: `
-        <div class="relative flex items-center justify-center" style="width: ${size}px; height: ${size}px;">
-          <!-- Glowing outer ring -->
-          <div class="absolute inset-0 rounded-full animate-pulse" style="background: ${color}; opacity: 0.15; transform: scale(1.35);"></div>
-          <!-- Inner core dot -->
-          <div class="relative rounded-full border border-white/30 text-white font-extrabold flex items-center justify-center select-none shadow-md" 
-               style="background: ${color}; width: 100%; height: 100%; box-shadow: 0 0 12px ${shadowColor}; font-size: ${size > 28 ? '10px' : '8px'};">
-            ${severity[0]}
-          </div>
+        <div style="position:relative; width:${size}px; height:${size}px;">
+          <div style="position:absolute; inset:-6px; border-radius:50%; background:${color}; opacity:.25; animation:cvPulse 2.4s ease-out infinite;"></div>
+          <div style="position:relative; width:${size}px; height:${size}px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); background:${color}; border:2.5px solid #fff; box-shadow:0 3px 8px -2px rgba(0,0,0,.3);"></div>
         </div>
       `,
       iconSize: [size, size],
-      iconAnchor: [size / 2, size / 2],
-      popupAnchor: [0, -size / 2]
+      iconAnchor: [size / 2, size],
+      popupAnchor: [0, -size]
     });
   };
 
@@ -174,7 +160,7 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
     }).setView(mapCenter, 12);
 
     // Dark Matter tile layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 20
     }).addTo(map);
@@ -277,12 +263,12 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
         const clusterHtml = `
           <div class="relative flex items-center justify-center">
             <!-- Pulsing ring -->
-            <div class="absolute w-14 h-14 rounded-full bg-violet-500/25 animate-ping" style="animation-duration: 2.2s;"></div>
+            <div class="absolute w-14 h-14 rounded-full" style="background: rgba(36,75,214,.2); animation: cvPulse 2.2s ease-out infinite;"></div>
             <!-- Core count bubble -->
-            <div class="relative w-11 h-11 rounded-full flex flex-col items-center justify-center font-display font-black text-xs text-white border border-violet-400 shadow-xl" 
-                 style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);">
-              <span class="leading-none text-[11px]">${cluster.count}</span>
-              <span class="text-[7px] uppercase tracking-wider text-violet-300 font-extrabold mt-0.5">Issues</span>
+            <div class="relative w-11 h-11 rounded-full flex flex-col items-center justify-center font-sans font-bold text-xs" 
+                 style="background: #244BD6; color: #fff; border: 3px solid #fff; box-shadow: 0 6px 16px -6px rgba(0,0,0,.4);">
+              <span class="leading-none" style="font-size:11px;">${cluster.count}</span>
+              <span style="font-size:7px; text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.75); font-weight:700;">issues</span>
             </div>
           </div>
         `;
@@ -325,35 +311,41 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
           : 'Recently';
 
         const popupDiv = document.createElement('div');
-        popupDiv.className = 'w-64 p-1.5 flex flex-col font-sans text-slate-100 gap-2.5';
+        popupDiv.style.cssText = 'width:240px; padding:12px; font-family:"IBM Plex Sans",sans-serif; color:#131A2A; display:flex; flex-direction:column; gap:8px;';
         popupDiv.innerHTML = `
-          <div class="flex items-start gap-3">
+          <div style="display:flex; align-items:flex-start; gap:10px;">
             ${report.photoUrl ? `
-              <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 border border-white/10 shrink-0">
-                <img src="${report.photoUrl}" referrerPolicy="no-referrer" class="w-full h-full object-cover">
+              <div style="width:44px; height:44px; border-radius:8px; overflow:hidden; flex-shrink:0; border:1px solid #E3E7EF;">
+                <img src="${report.photoUrl}" referrerpolicy="no-referrer" style="width:100%; height:100%; object-fit:cover;">
               </div>
             ` : `
-              <div class="w-12 h-12 rounded-xl bg-slate-950 border border-white/5 flex items-center justify-center shrink-0 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                NO PIC
-              </div>
+              <div style="width:44px; height:44px; border-radius:8px; background:#F2F4F8; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:9px; color:#9AA4B5; font-weight:700;">NO PIC</div>
             `}
-            <div class="min-w-0 flex-1">
-              <h4 class="font-extrabold text-xs text-white uppercase tracking-tight">${report.category}</h4>
-              <p class="text-[9px] text-slate-400 mt-0.5">Filed ${dateStr}</p>
+            <div style="min-width:0; flex:1;">
+              <h4 style="font-family:'Space Grotesk'; font-weight:700; font-size:13px; color:#131A2A; margin:0 0 3px;">${report.category}</h4>
+              <p style="font-size:10px; color:#9AA4B5; margin:0;">Filed ${dateStr}</p>
             </div>
           </div>
 
-          <div class="flex items-center gap-1.5">
-            <span class="px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-full border ${statusBadgeColor}">${report.status}</span>
-            <span class="px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-full border ${severityBadgeColor}">${report.severity}</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:10px; font-weight:600; padding:3px 8px; border-radius:999px; background:${
+              report.status === 'Resolved' ? '#E4F5EC' : report.status === 'Under Review' ? '#FBF0D9' : '#FDECEC'
+            }; color:${
+              report.status === 'Resolved' ? '#0F7A45' : report.status === 'Under Review' ? '#9A6B00' : '#C2333A'
+            };">${report.status}</span>
+            <span style="font-size:10px; font-weight:600; padding:3px 8px; border-radius:999px; background:${
+              report.severity === 'High' ? '#FDECEC' : report.severity === 'Medium' ? '#FBF0D9' : '#EAEFF6'
+            }; color:${
+              report.severity === 'High' ? '#C2333A' : report.severity === 'Medium' ? '#9A6B00' : '#5A6478'
+            };">${report.severity}</span>
           </div>
 
-          <p class="text-[10px] text-slate-300 leading-relaxed italic border-l-2 border-violet-500/40 pl-2">
-            "${report.userNotes || 'No notes description provided.'}"
+          <p style="font-size:11px; color:#6A7488; line-height:1.5; font-style:italic; border-left:2px solid rgba(124,92,252,.3); padding-left:8px; margin:0;">
+            "${report.userNotes || 'No notes.'}"
           </p>
           
-          <div class="text-[8px] uppercase tracking-widest text-slate-500 font-black flex items-center gap-1">
-            💼 Dept: ${report.responsible_department}
+          <div style="font-size:10px; color:#8A93A5; font-weight:600; letter-spacing:0.04em; text-transform:uppercase;">
+            💼 ${report.responsible_department}
           </div>
         `;
 
@@ -366,15 +358,15 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
   return (
     <div className="space-y-6">
       {/* Filters Overlay Panel */}
-      <div className="glass rounded-2xl p-5 border border-white/5 relative overflow-hidden shadow-xl">
-        <div className="absolute -top-12 -left-12 w-36 h-36 bg-violet-500/5 rounded-full blur-2xl pointer-events-none" />
+      <div className="civic-card rounded-2xl p-5" style={{ overflow: 'hidden' }}>
+        {/* no decorative blobs in light theme */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center">
               <Sliders size={15} />
             </div>
             <div>
-              <h3 className="font-display font-bold text-sm text-white">Geographic Intelligence</h3>
+              <h3 className="font-display font-bold text-sm" style={{ color: '#131A2A' }}>Geographic Intelligence</h3>
               <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Density heat mapping & active hot zones</p>
             </div>
           </div>
@@ -383,7 +375,8 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
           {reports.length === 0 && onSeedData && (
             <button
               onClick={onSeedData}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-cyan-600 text-white rounded-xl px-4 py-2 text-xs font-bold transition hover:opacity-90 active:scale-95 shadow-lg shadow-violet-500/20 cursor-pointer"
+              className="btn-primary flex items-center gap-1.5"
+              style={{ fontSize: 12, padding: '8px 14px', borderRadius: 9, boxShadow: 'none' }}
             >
               <Sparkles size={13} className="animate-pulse" /> Seeding Hotspot Test Reports
             </button>
@@ -399,7 +392,7 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value as any)}
-                className="w-full bg-slate-900/60 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-violet-500 transition cursor-pointer appearance-none"
+                style={{width:"100%",background:"#fff",border:"1px solid #E3E7EF",borderRadius:8,padding:"8px 12px",fontSize:12,fontWeight:600,color:"#3A4456",cursor:"pointer",outline:"none"}}
               >
                 <option value="All">All Categories</option>
                 <option value="Pothole">Potholes</option>
@@ -424,7 +417,7 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="w-full bg-slate-900/60 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-violet-500 transition cursor-pointer appearance-none"
+                style={{width:"100%",background:"#fff",border:"1px solid #E3E7EF",borderRadius:8,padding:"8px 12px",fontSize:12,fontWeight:600,color:"#3A4456",cursor:"pointer",outline:"none"}}
               >
                 <option value="All">All Statuses</option>
                 <option value="Reported">Reported</option>
@@ -442,7 +435,7 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value as any)}
-                className="w-full bg-slate-900/60 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-violet-500 transition cursor-pointer appearance-none"
+                style={{width:"100%",background:"#fff",border:"1px solid #E3E7EF",borderRadius:8,padding:"8px 12px",fontSize:12,fontWeight:600,color:"#3A4456",cursor:"pointer",outline:"none"}}
               >
                 <option value="all">Last 30 Days</option>
                 <option value="15days">Last 15 Days</option>
@@ -480,16 +473,16 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
       </div>
 
       {/* Map Content Box */}
-      <div className="relative h-[480px] w-full rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-slate-950">
+      <div className="relative h-[400px] w-full rounded-xl overflow-hidden border" style={{ background: '#E8EDF2', borderColor: '#E3E7EF' }}>
         {/* Map Container mount point */}
         <div ref={mapElementRef} className="w-full h-full relative z-[1]" id="trends-density-map" />
 
         {/* Ambient Vignette Overlay */}
-        <div className="absolute inset-0 rounded-2xl pointer-events-none z-[2]" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(6,8,15,0.45) 100%)' }} />
+        {/* no vignette in light theme */}
 
         {/* Floating Interactive Legends Panel */}
-        <div className="absolute bottom-4 left-4 z-[10] backdrop-blur-xl bg-slate-950/85 border border-white/10 p-3.5 rounded-xl shadow-2xl max-w-xs font-sans text-slate-100 space-y-3">
-          <div className="flex items-center gap-2 border-b border-white/5 pb-1.5">
+        <div className="absolute bottom-4 left-4 z-[10] p-3.5 rounded-xl shadow-xl max-w-xs font-sans space-y-3" style={{ background: 'rgba(255,255,255,.95)', border: '1px solid #E3E7EF', backdropFilter: 'blur(6px)', color: '#131A2A' }}>
+          <div className="flex items-center gap-2 pb-1.5" style={{ borderBottom: '1px solid #EEF1F6' }}>
             <Info size={12} className="text-violet-400" />
             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-300">Map Legend Guide</h4>
           </div>
@@ -518,7 +511,7 @@ export default function TrendMap({ reports, onSeedData }: TrendMapProps) {
             </div>
 
             {/* Severity Sizing */}
-            <div className="space-y-1 border-t border-white/5 pt-1.5">
+            <div className="space-y-1 pt-1.5" style={{ borderTop: '1px solid #EEF1F6' }}>
               <span className="text-[8px] uppercase tracking-wider text-slate-500 font-bold block">Severity Marker Sizing</span>
               <div className="flex items-center justify-between gap-2.5 bg-white/[0.02] px-2 py-1 rounded border border-white/5 text-[9px]">
                 <span className="flex items-center gap-1 text-[9px] font-black text-emerald-400">Low <span className="text-[7px] text-slate-500 font-medium">(S)</span></span>

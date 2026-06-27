@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AdminPanel from './AdminPanel';
+import { updateDoc } from 'firebase/firestore';
 
 // Mock Firebase
 vi.mock('../lib/firebase', () => ({
@@ -142,5 +143,84 @@ describe('AdminPanel - Security & Management Suite', () => {
     // Pothole report should be filtered out, traffic signal issue should stay
     expect(container.querySelector('#list-item-report-id-1')).toBeNull();
     expect(container.querySelector('#list-item-report-id-2')).toBeTruthy();
+  });
+
+  it('should fail open and mark the issue resolved when resolution audit api fails', async () => {
+    // Stub FileReader to load dummy base64 instantly
+    const dummyBase64 = 'data:image/jpeg;base64,mock';
+    class MockFileReader {
+      onload: (() => void) | null = null;
+      onloadend: (() => void) | null = null;
+      result: string = dummyBase64;
+      readAsDataURL() {
+        if (this.onload) {
+          this.onload();
+        }
+        if (this.onloadend) {
+          this.onloadend();
+        }
+      }
+    }
+    vi.stubGlobal('FileReader', MockFileReader);
+
+    // Mock fetch to reject, simulating a 503/network failure
+    const fetchSpy = vi.spyOn(window, 'fetch').mockRejectedValue(new Error('Simulated Gemini 503 / network issue'));
+
+    const { container } = render(<AdminPanel />);
+
+    // Unlock the panel with pin 1234
+    const pinInput = container.querySelector('#admin-pin-hidden-input') as HTMLInputElement;
+    const form = pinInput.closest('form');
+    if (pinInput && form) {
+      fireEvent.change(pinInput, { target: { value: '1234' } });
+      fireEvent.submit(form);
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText(/grievance dashboard/i)).toBeTruthy();
+    });
+
+    // Select the first report
+    const listItem = container.querySelector('#list-item-report-id-1');
+    expect(listItem).toBeTruthy();
+    if (listItem) {
+      fireEvent.click(listItem);
+    }
+
+    // Click the "Verify & Resolve" button to open the capture portal
+    const resolveBtn = container.querySelector('#status-resolved-btn');
+    expect(resolveBtn).toBeTruthy();
+    if (resolveBtn) {
+      fireEvent.click(resolveBtn);
+    }
+
+    // Verify the portal is open
+    expect(container.querySelector('#resolution-capture-portal')).toBeTruthy();
+
+    // Trigger image upload
+    const fileInput = container.querySelector('input[accept="image/*"]');
+    expect(fileInput).toBeTruthy();
+    if (fileInput) {
+      const file = new File(['mock-photo-content'], 'resolution.jpg', { type: 'image/jpeg' });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    }
+
+    // Wait for file reader to update the state so that the submit button becomes active
+    await waitFor(() => {
+      const submitBtn = screen.getByText(/Submit Resolution for AI Audit/i);
+      expect(submitBtn.closest('button')).not.toHaveProperty('disabled', true);
+    });
+
+    // Click submit resolution
+    const submitBtn = screen.getByText(/Submit Resolution for AI Audit/i);
+    fireEvent.click(submitBtn);
+
+    // Verify updateDoc is called with the fail-open fallback status and details
+    await waitFor(() => {
+      expect(updateDoc).toHaveBeenCalled();
+    });
+
+    vi.unstubAllGlobals();
+    fetchSpy.mockRestore();
   });
 });
