@@ -2,7 +2,30 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { CivicReport, ReportStatus, CivicCategory, SeverityLevel } from '../types';
-import { Trash2, AlertCircle, Clock, CheckCircle2, ChevronRight, Filter, Search, MapPin, Eye, FileSpreadsheet, Layers, Sparkles, Lock, ShieldAlert, UploadCloud, ShieldCheck, Camera, RefreshCw, AlertTriangle, Building2 } from 'lucide-react';
+import { Trash2, AlertCircle, Clock, CheckCircle2, ChevronRight, Filter, Search, MapPin, Eye, FileSpreadsheet, Layers, Sparkles, Lock, ShieldAlert, UploadCloud, ShieldCheck, Camera, RefreshCw, AlertTriangle, Building2, X, Maximize2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ReportSidebar } from './ReportSidebar';
+
+const getCategoryPattern = (category: string) => {
+  const cat = (category || '').toLowerCase();
+  if (cat.includes('pothole')) {
+    return 'repeating-linear-gradient(-45deg, #e4d3c9, #e4d3c9 10px, #eedfe6 10px, #eedfe6 20px)';
+  } else if (cat.includes('streetlight')) {
+    return 'repeating-linear-gradient(-45deg, #d8dbbf, #d8dbbf 10px, #e8ebd5 10px, #e8ebd5 20px)';
+  } else if (cat.includes('garbage') || cat.includes('dumping') || cat.includes('waste')) {
+    return 'repeating-linear-gradient(-45deg, #cbd4c2, #cbd4c2 10px, #dde5d5 10px, #dde5d5 20px)';
+  } else if (cat.includes('water') || cat.includes('leakage')) {
+    return 'repeating-linear-gradient(-45deg, #cbdce4, #cbdce4 10px, #ddebf2 10px, #ddebf2 20px)';
+  } else if (cat.includes('traffic') || cat.includes('signal')) {
+    return 'repeating-linear-gradient(-45deg, #dbcfd3, #dbcfd3 10px, #ebdfe3 10px, #ebdfe3 20px)';
+  } else if (cat.includes('toilet')) {
+    return 'repeating-linear-gradient(-45deg, #cfd3db, #cfd3db 10px, #dfded3 10px, #dfded3 20px)';
+  } else if (cat.includes('tree') || cat.includes('fallen')) {
+    return 'repeating-linear-gradient(-45deg, #c2d4c6, #c2d4c6 10px, #d5e5da 10px, #d5e5da 20px)';
+  }
+  // Fallback pattern
+  return 'repeating-linear-gradient(-45deg, #cbd4c2, #cbd4c2 10px, #dde5d5 10px, #dde5d5 20px)';
+};
 
 export default function AdminPanel() {
   const [reports, setReports] = useState<CivicReport[]>([]);
@@ -355,13 +378,15 @@ export default function AdminPanel() {
   };
 
   // Delete ticket
-  const handleDeleteReport = async (reportId: string) => {
-    let proceed = false;
-    try {
-      proceed = window.confirm('Are you sure you want to delete this civic grievance file from the community log? This is irreversible.');
-    } catch (e) {
-      console.warn('window.confirm blocked/unavailable in sandbox. Proceeding safely.', e);
-      proceed = true; // Fallback to let the user delete in preview demo
+  const handleDeleteReport = async (reportId: string, bypassConfirm: boolean = false) => {
+    let proceed = bypassConfirm;
+    if (!bypassConfirm) {
+      try {
+        proceed = window.confirm('Are you sure you want to delete this civic grievance file from the community log? This is irreversible.');
+      } catch (e) {
+        console.warn('window.confirm blocked/unavailable in sandbox. Proceeding safely.', e);
+        proceed = true; // Fallback to let the user delete in preview demo
+      }
     }
 
     if (!proceed) return;
@@ -421,22 +446,19 @@ export default function AdminPanel() {
     switch (level) {
       case 'High':
         return (
-          <span className="inline-flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-            <span className="severity-dot severity-dot-high !w-[6px] !h-[6px]" />
+          <span className="inline-flex items-center bg-[#FFEBEB] text-[#D03B43] px-3 py-1 rounded-full text-xs font-bold font-sans">
             High
           </span>
         );
       case 'Medium':
         return (
-          <span className="inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-            <span className="severity-dot severity-dot-medium !w-[6px] !h-[6px]" />
+          <span className="inline-flex items-center bg-[#FFF4E5] text-[#C47417] px-3 py-1 rounded-full text-xs font-bold font-sans">
             Medium
           </span>
         );
       case 'Low':
         return (
-          <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-            <span className="severity-dot severity-dot-low !w-[6px] !h-[6px]" />
+          <span className="inline-flex items-center bg-[#EDF2F7] text-[#4A5568] px-3 py-1 rounded-full text-xs font-bold font-sans">
             Low
           </span>
         );
@@ -447,20 +469,20 @@ export default function AdminPanel() {
     switch (status) {
       case 'Reported':
         return (
-          <span className="status-reported inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold leading-none">
-            <Clock size={10} /> Reported
+          <span className="inline-flex items-center gap-1.5 bg-[#FFEBEB] text-[#D03B43] px-3 py-1 rounded-full text-xs font-bold leading-none font-sans">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E53E3E]" /> Reported
           </span>
         );
       case 'Under Review':
         return (
-          <span className="status-review inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold leading-none animate-pulse">
-            <AlertCircle size={10} /> Under Review
+          <span className="inline-flex items-center gap-1.5 bg-[#FFF4E5] text-[#C47417] px-3 py-1 rounded-full text-xs font-bold leading-none font-sans">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#DD6B20]" /> Under Review
           </span>
         );
       case 'Resolved':
         return (
-          <span className="status-resolved inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold leading-none">
-            <CheckCircle2 size={10} /> Resolved
+          <span className="inline-flex items-center gap-1.5 bg-[#E6FFFA] text-[#1D8A74] px-3 py-1 rounded-full text-xs font-bold leading-none font-sans">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#319795]" /> Resolved
           </span>
         );
     }
@@ -632,33 +654,30 @@ export default function AdminPanel() {
       )}
 
       {/* Banner / stats */}
-      <div id="admin-header" className="py-8 px-6 md:px-12 border-b relative overflow-hidden" style={{ background: '#0F1A3D', color: '#fff', borderColor: 'rgba(255,255,255,0.1)' }}>
-        {/* Aurora decorative orbs */}
-        <div className="absolute -top-20 -left-20 w-72 h-72 bg-violet-500/15 rounded-full blur-[100px] pointer-events-none animate-glow-pulse" />
-        <div className="absolute -bottom-16 right-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none animate-glow-pulse delay-200" />
-        {/* Grid overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
-
+      <div id="admin-header" className="py-8 px-6 md:px-12 border-b relative overflow-hidden" style={{ background: '#F8FAFC', color: '#0F1A3D', borderColor: '#E2E8F0' }}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative">
           <div>
-            <span className="text-[10px] uppercase font-black tracking-widest text-violet-300 bg-gradient-to-r from-violet-950/80 to-cyan-950/80 border border-violet-500/20 px-3 py-1 rounded-full inline-block">Dispatch Command Panel</span>
-            <h1 className="text-2xl md:text-3xl font-display font-bold tracking-tight mt-3" style={{ color: '#fff' }}>Dispatch Command Panel</h1>
-            <p className="text-sm mt-2 max-w-xl leading-relaxed" style={{ color: '#B7C2E4' }}>Review cataloged community incidents, authorize municipal work orders, and coordinate department responses in real-time.</p>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[11px] uppercase font-black tracking-widest text-[#5A6A85] font-sans">ADMIN</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-[#D03B43] bg-[#FFEBEB] px-2 py-0.5 rounded-md font-sans">RESTRICTED</span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-display font-bold tracking-tight text-[#0F1A3D]">Dispatch Command Panel</h1>
+            <p className="text-sm mt-1 max-w-xl leading-relaxed text-[#5A6A85]">Review incidents, authorize work orders, and coordinate department responses.</p>
           </div>
           
           {/* Quick Counter widgets */}
           <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '12px 18px', textAlign: 'center', minWidth: 76, border: '1px solid rgba(255,255,255,.15)' }}>
-              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24, color: '#fff' }}>{reports.length}</div>
-              <div style={{ fontSize: 9, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#9FB0E6', fontWeight: 600 }}>Total</div>
+            <div style={{ background: '#ffffff', borderRadius: 12, padding: '12px 18px', textAlign: 'center', minWidth: 76, border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24, color: '#0F1A3D' }}>{reports.length}</div>
+              <div style={{ fontSize: 9, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#5A6A85', fontWeight: 600 }}>Total</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '12px 18px', textAlign: 'center', minWidth: 76, border: '1px solid rgba(255,255,255,.15)' }}>
-              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24, color: '#FF8A8F' }}>{reports.filter(r => r.status === 'Reported').length}</div>
-              <div style={{ fontSize: 9, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#9FB0E6', fontWeight: 600 }}>New</div>
+            <div style={{ background: '#ffffff', borderRadius: 12, padding: '12px 18px', textAlign: 'center', minWidth: 76, border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24, color: '#D03B43' }}>{reports.filter(r => r.status === 'Reported').length}</div>
+              <div style={{ fontSize: 9, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#5A6A85', fontWeight: 600 }}>New</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '12px 18px', textAlign: 'center', minWidth: 76, border: '1px solid rgba(255,255,255,.15)' }}>
-              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24, color: '#5ECFA0' }}>{reports.filter(r => r.status === 'Resolved').length}</div>
-              <div style={{ fontSize: 9, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#9FB0E6', fontWeight: 600 }}>Resolved</div>
+            <div style={{ background: '#ffffff', borderRadius: 12, padding: '12px 18px', textAlign: 'center', minWidth: 76, border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 24, color: '#1D8A74' }}>{reports.filter(r => r.status === 'Resolved').length}</div>
+              <div style={{ fontSize: 9, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#5A6A85', fontWeight: 600 }}>Resolved</div>
             </div>
           </div>
         </div>
@@ -671,7 +690,7 @@ export default function AdminPanel() {
           <div className="lg:col-span-2 space-y-6">
             
             {/* Filters panel */}
-            <div className="glass rounded-2xl p-4 flex flex-col md:flex-row items-center gap-4">
+            <div className="bg-white border border-[#E3E7EF] rounded-2xl p-4 flex flex-col md:flex-row items-center gap-4 shadow-sm">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-3.5 top-3 text-slate-500" size={16} />
                 <input 
@@ -679,7 +698,7 @@ export default function AdminPanel() {
                   type="text" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Query department, keywords, category or ticket text..."
+                  placeholder="Query department, keyword, category or ticket text..."
                   className="civic-input"
                   style={{ paddingLeft: 40, fontSize: 13 }}
                 />
@@ -687,14 +706,13 @@ export default function AdminPanel() {
 
               {/* Status and category dropdowns */}
               <div className="flex items-center gap-2.5 w-full md:w-auto">
-                <Filter size={14} className="text-violet-400 hidden md:block shrink-0" />
                 <select 
                   id="status-filter"
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
                   style={{ background: '#fff', border: '1px solid #E3E7EF', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#3A4456', cursor: 'pointer', outline: 'none' }}
                 >
-                  <option value="All">All Statuses</option>
+                  <option value="All">All Statuses ▾</option>
                   <option value="Reported">Reported</option>
                   <option value="Under Review">Under Review</option>
                   <option value="Resolved">Resolved</option>
@@ -706,7 +724,7 @@ export default function AdminPanel() {
                   onChange={(e) => setFilterCategory(e.target.value)}
                   style={{ background: '#fff', border: '1px solid #E3E7EF', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#3A4456', cursor: 'pointer', outline: 'none' }}
                 >
-                  <option value="All">All Categories</option>
+                  <option value="All">All Categories ▾</option>
                   <option value="Pothole">Pothole</option>
                   <option value="Streetlight">Streetlight</option>
                   <option value="Garbage/Waste">Garbage/Waste</option>
@@ -723,81 +741,112 @@ export default function AdminPanel() {
 
             {/* List block */}
             {loading ? (
-              <div className="glass p-20 text-center rounded-3xl space-y-4">
+              <div className="bg-white border border-[#E3E7EF] p-20 text-center rounded-3xl space-y-4 shadow-sm animate-pulse">
                 {/* Orbital loader */}
                 <div className="relative w-12 h-12 mx-auto flex items-center justify-center">
                   <span className="absolute w-full h-full rounded-full border border-violet-500/20" />
                   <span className="absolute w-3 h-3 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 animate-orbit" />
-                  <span className="absolute w-2 h-2 rounded-full bg-violet-400/60 animate-orbit" style={{ animationDelay: '0.5s', animationDuration: '2s' }} />
-                  <span className="absolute w-6 h-6 rounded-full border border-cyan-500/15 animate-pulse-ring" />
                 </div>
-                <p className="text-xs text-slate-400 font-extrabold tracking-wider uppercase animate-fade-in-up">Sifting record logs...</p>
+                <p className="text-xs text-slate-400 font-extrabold tracking-wider uppercase">Sifting record logs...</p>
               </div>
             ) : filteredReports.length === 0 ? (
-              <div className="glass p-16 text-center rounded-3xl space-y-4">
+              <div className="bg-white border border-[#E3E7EF] p-16 text-center rounded-3xl space-y-4 shadow-sm">
                 <div className="w-14 h-14 bg-gradient-to-br from-violet-500/15 to-cyan-500/15 border border-violet-500/10 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
                   <Layers size={22} />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-white text-sm">No Matches in Log</h3>
+                  <h3 className="font-display font-bold text-[#0F1A3D] text-sm">No Matches in Log</h3>
                   <p className="text-[11px] text-slate-400 max-w-xs mx-auto mt-1 leading-relaxed">No reports matching your search or filters are currently available.</p>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="bg-white border border-[#E3E7EF] rounded-2xl shadow-sm divide-y divide-[#EEF1F6] overflow-hidden">
                 {filteredReports.map((report) => {
-                  const dateStr = report.timestamp?.seconds 
-                    ? new Date(report.timestamp.seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                    : report.timestamp instanceof Date 
-                      ? report.timestamp.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                      : 'Just now';
+                  const getDeptTag = (dept: string) => {
+                    const d = (dept || '').toLowerCase();
+                    if (d.includes('municipal')) return 'MUNICIPAL';
+                    if (d.includes('electricity')) return 'ELECTRICITY';
+                    if (d.includes('water')) return 'WATER';
+                    if (d.includes('sanitation') || d.includes('garbage') || d.includes('waste')) return 'SANITATION';
+                    return 'MUNICIPAL';
+                  };
 
                   return (
                     <div 
                       id={`list-item-${report.id}`}
                       key={report.id}
                       onClick={() => setSelectedReport(report)}
-                      className={`group dispatch-row ${selectedReport?.id === report.id ? 'civic-card-active' : 'civic-card'}`}
+                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 cursor-pointer transition-colors duration-150 ${
+                        selectedReport?.id === report.id ? 'bg-[#F4F7FF]' : 'hover:bg-[#F7F9FC] bg-white'
+                      }`}
                     >
-                      {/* Avatar/Image */}
-                      {report.photoUrl ? (
-                        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border" style={{ background: '#F2F4F8', borderColor: '#E3E7EF' }}>
-                          <img src={report.photoUrl} className="w-full h-full object-cover group-hover:scale-105 transition duration-355" referrerPolicy="no-referrer" />
-                        </div>
-                      ) : (
-                        <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 border" style={{ background: '#F2F4F8', borderColor: '#E3E7EF', color: '#9AA4B5', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' }}>
-                          <Layers size={20} />
-                        </div>
-                      )}
+                      {/* Left Block: Custom striped avatar + title & info */}
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        {/* Beautiful striped category avatar or uploaded photo */}
+                        {report.photoUrl ? (
+                          <div 
+                            style={{ 
+                              width: 58, 
+                              height: 58, 
+                              flexShrink: 0, 
+                              borderRadius: 12, 
+                              overflow: 'hidden',
+                              boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)'
+                            }}
+                          >
+                            <img 
+                              src={report.photoUrl} 
+                              alt={report.category} 
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                        ) : (
+                          <div 
+                            style={{ 
+                              width: 58, 
+                              height: 58, 
+                              flexShrink: 0, 
+                              borderRadius: 12, 
+                              background: getCategoryPattern(report.category),
+                              boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)'
+                            }} 
+                          />
+                        )}
 
-                      {/* Summary */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          <h3 className="font-display font-bold text-[14px] leading-tight" style={{ color: '#131A2A' }}>{report.category}</h3>
-                          <span className="text-xs hidden sm:inline" style={{ color: '#E3E7EF' }}>|</span>
-                          <span className="text-[10px] font-extrabold tracking-wide uppercase" style={{ color: '#9AA4B5' }}>{dateStr}</span>
-                        </div>
-                        <p className="text-xs mt-1.5 line-clamp-1 italic leading-relaxed" style={{ color: '#6A7488' }}>
-                          "{report.userNotes || 'No notes description recorded. Read the formal text.'}"
-                        </p>
-                        
-                        <div className="flex items-center gap-3 mt-2.5 flex-wrap">
-                          <span className="text-[9px] uppercase tracking-wider font-extrabold text-violet-400 bg-violet-950/50 border border-violet-900/30 px-2.5 py-0.5 rounded-full">
-                            💼 {report.responsible_department}
-                          </span>
-                          <span className="text-[10px] text-slate-500 font-extrabold">
-                            🎯 {report.confirmations || 1} support votes
-                          </span>
+                        {/* Title, ticket, and description */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-sans font-bold text-[#0F1A3D] text-[15px] leading-tight">{report.category}</span>
+                            <span className="font-sans text-[11px] text-[#8A93A5] font-medium tracking-wide">CV-{report.id.slice(0, 4).toUpperCase()}</span>
+                          </div>
+                          <p className="text-[13px] text-[#5C6479] italic mt-1 line-clamp-1 leading-relaxed">
+                            "{report.userNotes || 'No notes description recorded.'}"
+                          </p>
                         </div>
                       </div>
 
-                      {/* Right metadata badge indicators */}
-                      <div className="flex flex-col items-end gap-2 shrink-0">
-                        {getSeverityBadge(report.severity)}
-                        <div className="flex items-center gap-1 text-[11px]">
-                          {getStatusBadge(report.status)}
-                          <ChevronRight size={14} className="text-slate-500 group-hover:translate-x-0.5 group-hover:rotate-12 transition-transform duration-300" />
+                      {/* Right Block: Badges & Chevron metadata */}
+                      <div className="flex items-center justify-between sm:justify-end gap-3.5 w-full sm:w-auto shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
+                        {/* Department tag */}
+                        <span className="px-2.5 py-1 text-[10px] font-bold tracking-wider rounded text-[#5C6F90] bg-[#EEF1F6] uppercase font-sans">
+                          {getDeptTag(report.responsible_department)}
+                        </span>
+
+                        {/* Support votes count */}
+                        <div className="flex items-center gap-1.5 text-[12px] font-bold text-[#4A5568] px-1">
+                          <span className="text-slate-500">▲</span>
+                          <span>{report.confirmations || 1}</span>
                         </div>
+
+                        {/* Severity badge */}
+                        {getSeverityBadge(report.severity)}
+
+                        {/* Status badge */}
+                        {getStatusBadge(report.status)}
+
+                        {/* Chevron Icon */}
+                        <ChevronRight size={14} className="text-[#CBD5E0] hidden sm:block" />
                       </div>
                     </div>
                   );
@@ -901,7 +950,7 @@ export default function AdminPanel() {
                 </div>
               </div>
 
-              {selectedReport ? (
+              {false && selectedReport ? (
                 <div id="inspector-card" className="civic-card rounded-2xl p-6 flex flex-col space-y-5 animate-fade-in-up" style={{ overflow: 'hidden' }}>
                   {/* Decorative aurora orbs */}
                   <div className="absolute top-0 right-0 w-40 h-40 bg-violet-500/8 rounded-full blur-3xl pointer-events-none animate-glow-pulse" />
@@ -1285,9 +1334,12 @@ export default function AdminPanel() {
                         <button 
                           id="status-reported-btn"
                           onClick={() => updateReportStatus(selectedReport.id, 'Reported')}
-                          disabled={selectedReport.status === 'Reported'}
+                          disabled={selectedReport.status === 'Reported' || selectedReport.status === 'Resolved'}
                           style={{
-                            flex: 1, padding: '9px', borderRadius: 9, fontWeight: 600, cursor: selectedReport.status === 'Reported' ? 'not-allowed' : 'pointer', fontFamily: "'IBM Plex Sans'",
+                            flex: 1, padding: '9px', borderRadius: 9, fontWeight: 600, 
+                            cursor: (selectedReport.status === 'Reported' || selectedReport.status === 'Resolved') ? 'not-allowed' : 'pointer', 
+                            fontFamily: "'IBM Plex Sans'",
+                            opacity: selectedReport.status === 'Resolved' ? 0.5 : 1,
                             background: selectedReport.status === 'Reported' ? '#FDECEC' : '#fff',
                             color: selectedReport.status === 'Reported' ? '#C2333A' : '#8A93A5',
                             border: `1px solid ${selectedReport.status === 'Reported' ? '#F3D2D3' : '#E3E7EF'}`
@@ -1299,9 +1351,12 @@ export default function AdminPanel() {
                         <button 
                           id="status-review-btn"
                           onClick={() => updateReportStatus(selectedReport.id, 'Under Review')}
-                          disabled={selectedReport.status === 'Under Review'}
+                          disabled={selectedReport.status === 'Under Review' || selectedReport.status === 'Resolved'}
                           style={{
-                            flex: 1, padding: '9px', borderRadius: 9, fontWeight: 700, cursor: selectedReport.status === 'Under Review' ? 'not-allowed' : 'pointer', fontFamily: "'IBM Plex Sans'",
+                            flex: 1, padding: '9px', borderRadius: 9, fontWeight: 700, 
+                            cursor: (selectedReport.status === 'Under Review' || selectedReport.status === 'Resolved') ? 'not-allowed' : 'pointer', 
+                            fontFamily: "'IBM Plex Sans'",
+                            opacity: selectedReport.status === 'Resolved' ? 0.5 : 1,
                             background: selectedReport.status === 'Under Review' ? '#E8A317' : '#fff',
                             color: selectedReport.status === 'Under Review' ? '#fff' : '#8A93A5',
                             border: `1px solid ${selectedReport.status === 'Under Review' ? '#E8A317' : '#E3E7EF'}`
@@ -1359,6 +1414,40 @@ export default function AdminPanel() {
 
         </div>
       </div>
+      <ReportSidebar 
+        selectedReport={selectedReport} 
+        setSelectedReport={setSelectedReport}
+        isCapturingResolution={isCapturingResolution}
+        setIsCapturingResolution={setIsCapturingResolution}
+        resolutionPhoto={resolutionPhoto}
+        setResolutionPhoto={setResolutionPhoto}
+        resolutionCoords={resolutionCoords}
+        setResolutionCoords={setResolutionCoords}
+        gpsStatus={gpsStatus}
+        setGpsStatus={setGpsStatus}
+        gpsError={gpsError}
+        setGpsError={setGpsError}
+        cameraError={cameraError}
+        setCameraError={setCameraError}
+        isCameraActive={isCameraActive}
+        setIsCameraActive={setIsCameraActive}
+        isVerifying={isVerifying}
+        setIsVerifying={setIsVerifying}
+        verificationError={verificationError}
+        setVerificationError={setVerificationError}
+        videoRef={videoRef}
+        captureGPS={captureGPS}
+        startCamera={startCamera}
+        stopCamera={stopCamera}
+        captureCameraPhoto={captureCameraPhoto}
+        handleResolutionFileChange={handleResolutionFileChange}
+        submitResolutionAudit={submitResolutionAudit}
+        updateReportStatus={updateReportStatus}
+        handleDeleteReport={handleDeleteReport}
+        getCategoryPattern={getCategoryPattern}
+        getStatusBadge={getStatusBadge}
+        getDistanceInMeters={getDistanceInMeters}
+      />
     </div>
   );
 }

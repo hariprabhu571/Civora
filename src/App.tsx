@@ -276,10 +276,10 @@ export default function App() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Detect mobile viewport size (< 768px for 'md')
+  // Detect mobile/tablet viewport size (< 1024px for 'lg')
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -581,7 +581,7 @@ export default function App() {
           <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
 
             {/* Left: incident list */}
-            <aside style={{ width: 360, flexShrink: 0, borderRight: '1px solid #E3E7EF', background: '#fff', minHeight: 0 }} className="hidden md:flex flex-col">
+            <aside style={{ width: 360, flexShrink: 0, borderRight: '1px solid #E3E7EF', background: '#fff', minHeight: 0 }} className="hidden lg:flex flex-col">
               {renderSidebarContent(false)}
             </aside>
 
@@ -601,7 +601,7 @@ export default function App() {
                       zIndex: 510,
                       backdropFilter: 'blur(2px)'
                     }}
-                    className="md:hidden"
+                    className="lg:hidden"
                   />
                   <motion.aside
                     initial={{ x: '-100%' }}
@@ -620,7 +620,7 @@ export default function App() {
                       flexDirection: 'column',
                       boxShadow: '20px 0 60px -20px rgba(15, 26, 61, 0.25)',
                     }}
-                    className="md:hidden"
+                    className="lg:hidden"
                   >
                     {renderSidebarContent(true)}
                   </motion.aside>
@@ -641,7 +641,7 @@ export default function App() {
               {isMobile && (
                 <button
                   onClick={() => setMobileSidebarOpen(true)}
-                  className="md:hidden"
+                  className="lg:hidden"
                   style={{
                     position: 'absolute',
                     bottom: 20,
@@ -670,8 +670,8 @@ export default function App() {
               {isMobile && (
                 <button
                   onClick={() => setReportModalOpen(true)}
-                  className="md:hidden"
-                  style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 500, width: 52, height: 52, borderRadius: '50%', background: '#244BD6', color: '#fff', border: 'none', fontSize: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px -8px rgba(36,75,214,.7)' }}
+                  className="lg:hidden"
+                  style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 500, width: 52, height: 52, borderRadius: '50%', background: '#244BD6', color: '#fff', border: 'none', fontSize: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyStyle: 'center', boxShadow: '0 8px 24px -8px rgba(36,75,214,.7)' }}
                 >
                   +
                 </button>
@@ -687,7 +687,7 @@ export default function App() {
                   exit={{ x: 400, opacity: 0 }}
                   transition={{ type: 'spring', damping: 26, stiffness: 220 }}
                   style={{ width: 400, flexShrink: 0, minHeight: 0 }}
-                  className="absolute md:relative right-0 top-0 bottom-0 z-50 shadow-[-20px_0_60px_-20px_rgba(0,0,0,0.15)] md:shadow-none md:border-l border-[#E3E7EF] bg-white overflow-y-auto"
+                  className="absolute lg:relative right-0 top-0 bottom-0 z-50 shadow-[-20px_0_60px_-20px_rgba(0,0,0,0.15)] lg:shadow-none lg:border-l border-[#E3E7EF] bg-white overflow-y-auto"
                 >
                   <DetailPanel
                     report={selectedReport}
@@ -930,7 +930,8 @@ export default function App() {
 
                   <button
                     onClick={() => {
-                      setUserLocation([37.7749, -122.4194]);
+                      safeLocalStorage.setItem('not_interested_location', 'true');
+                      setUserLocation(null);
                       setLocationModalOpen(false);
                     }}
                     style={{
@@ -950,7 +951,7 @@ export default function App() {
                     onMouseOver={(e) => (e.currentTarget.style.color = '#5A6478')}
                     onMouseOut={(e) => (e.currentTarget.style.color = '#8A93A5')}
                   >
-                    Not interested to share location
+                    Not Interested to share location
                   </button>
                 </div>
               )}

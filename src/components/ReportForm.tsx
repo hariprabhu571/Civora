@@ -81,7 +81,8 @@ export default function ReportForm({ onBackToMap, onSuccess, defaultCoordinates 
 
   // Web Geolocation Capture on mount if defaultCoordinates not provided
   useEffect(() => {
-    if (!defaultCoordinates) {
+    const notInterested = safeLocalStorage.getItem('not_interested_location') === 'true';
+    if (!defaultCoordinates && !notInterested) {
       attemptGeolocation();
     }
   }, [defaultCoordinates]);

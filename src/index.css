@@ -553,7 +553,10 @@ body {
   border-bottom: 1px solid #EEF1F6 !important;
   transition: background 0.15s ease !important;
   font-size: 18px !important;
-  line-height: 26px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
   width: 38px !important;
   height: 38px !important;
 }
