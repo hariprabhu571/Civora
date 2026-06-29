@@ -100,6 +100,37 @@ To prevent "paper-resolutions" (where tickets are marked closed without work bei
 
 ---
 
+## Screenshots
+
+### Login Page
+![Login Page](Screenshots/Screenshot%202026-06-30%20001851.png)
+
+### Home Page
+![Login Page](Screenshots/Screenshot%202026-06-30%20001914.png)
+
+### Map Feed Incident Page
+![Login Page](Screenshots/Screenshot%202026-06-30%20001924.png)
+
+### Incident Report
+![Login Page](Screenshots/Screenshot%202026-06-30%20002045.png)
+
+### AI Civic Trend Analysis Page
+![Login Page](Screenshots/Screenshot%202026-06-30%20002016.png)
+
+### HeatMap
+![Login Page](Screenshots/Screenshot%202026-06-30%20002005.png)
+
+### Dispatch Board Page
+![Login Page](Screenshots/Screenshot%202026-06-30%20002329.png)
+
+### Incident View
+![Report Issue](Screenshots/Screenshot%202026-06-30%20002339.png)
+
+### Incident Status Update
+![Dashboard](Screenshots/Screenshot%202026-06-30%20002426.png)
+
+**Note: Remaining Screenshots are available in Screenshots folder.**
+
 ## 🛠️ Environment Setup & Configuration
 
 ### Prerequisites
