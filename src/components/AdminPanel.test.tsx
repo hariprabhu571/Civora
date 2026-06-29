@@ -134,7 +134,7 @@ describe('AdminPanel - Security & Management Suite', () => {
     });
 
     // We have search input
-    const searchInput = screen.getByPlaceholderText(/query department, keywords/i);
+    const searchInput = screen.getByPlaceholderText(/query department, keyword/i);
     expect(searchInput).toBeTruthy();
 
     // Type a term that matches one report but not the other
@@ -153,15 +153,18 @@ describe('AdminPanel - Security & Management Suite', () => {
       onloadend: (() => void) | null = null;
       result: string = dummyBase64;
       readAsDataURL() {
-        if (this.onload) {
-          this.onload();
-        }
-        if (this.onloadend) {
-          this.onloadend();
-        }
+        setTimeout(() => {
+          if (this.onload) {
+            this.onload();
+          }
+          if (this.onloadend) {
+            this.onloadend();
+          }
+        }, 0);
       }
     }
     vi.stubGlobal('FileReader', MockFileReader);
+    window.FileReader = MockFileReader as any;
 
     // Mock fetch to reject, simulating a 503/network failure
     const fetchSpy = vi.spyOn(window, 'fetch').mockRejectedValue(new Error('Simulated Gemini 503 / network issue'));
@@ -198,7 +201,7 @@ describe('AdminPanel - Security & Management Suite', () => {
     expect(container.querySelector('#resolution-capture-portal')).toBeTruthy();
 
     // Trigger image upload
-    const fileInput = container.querySelector('input[accept="image/*"]');
+    const fileInput = container.querySelector('#admin-resolution-file-input');
     expect(fileInput).toBeTruthy();
     if (fileInput) {
       const file = new File(['mock-photo-content'], 'resolution.jpg', { type: 'image/jpeg' });
@@ -206,14 +209,18 @@ describe('AdminPanel - Security & Management Suite', () => {
     }
 
     // Wait for file reader to update the state so that the submit button becomes active
+    let enabledBtn: HTMLElement | undefined;
     await waitFor(() => {
-      const submitBtn = screen.getByText(/Submit Resolution for AI Audit/i);
-      expect(submitBtn.closest('button')).not.toHaveProperty('disabled', true);
+      const submitBtns = screen.queryAllByText(/Submit Resolution for AI Audit/i);
+      const found = submitBtns.find(btn => !btn.closest('button')?.disabled);
+      expect(found).toBeTruthy();
+      enabledBtn = found;
     });
 
     // Click submit resolution
-    const submitBtn = screen.getByText(/Submit Resolution for AI Audit/i);
-    fireEvent.click(submitBtn);
+    if (enabledBtn) {
+      fireEvent.click(enabledBtn);
+    }
 
     // Verify updateDoc is called with the fail-open fallback status and details
     await waitFor(() => {
